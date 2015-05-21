@@ -52,7 +52,7 @@ from ctypes import c_int16
 
 
 class MPU6050:
-    __mpu = Adafruit_I2C()
+    __mpu = Adafruit_I2C
     __buffer = [0] * 14
 
     def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS):

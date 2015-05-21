@@ -129,13 +129,13 @@ class MPU6050:
         return gyro
 
     def set_x_accel_offset(self, a_offset):
-        self.__mpu.write16(MPU6050_RA_XA_OFFS_H, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_XA_OFFS_H, a_offset)
 
     def set_y_accel_offset(self, a_offset):
-        self.__mpu.write16(MPU6050_RA_YA_OFFS_H, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_YA_OFFS_H, a_offset)
 
     def set_z_accel_offset(self, a_offset):
-        self.__mpu.write16(MPU6050_RA_ZA_OFFS_H, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_ZA_OFFS_H, a_offset)
 
     def set_x_gyro_offset(self, a_offset):
         self.__write_bits(

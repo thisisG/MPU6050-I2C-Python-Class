@@ -55,8 +55,9 @@ class MPU6050:
     __mpu = Adafruit_I2C
     __buffer = [0] * 14
 
-    def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=0,
-                 a_yAOff=0, a_zAOff=0, a_xGOff=0, a_yGOff=0, a_zGOff=0):
+    def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=None,
+                 a_yAOff=None, a_zAOff=None, a_xGOff=None, a_yGOff=None,
+                 a_zGOff=None):
         # Connect to the I2C bus with default address of device as 0x68
         self.__mpu = Adafruit_I2C(a_address)
         # Set clock source to gyro
@@ -65,15 +66,21 @@ class MPU6050:
         self.__set_full_scale_accel_range(C.MPU6050_ACCEL_FS_2)
         # Set gyro range
         self.__set_full_scale_gyro_range(C.MPU6050_GYRO_FS_250)
-        # Set offsets
-        self.set_x_accel_offset(a_xAOff)
-        self.set_y_accel_offset(a_yAOff)
-        self.set_z_accel_offset(a_zAOff)
-        self.set_x_gyro_offset(a_xGOff)
-        self.set_y_gyro_offset(a_xGOff)
-        self.set_z_gyro_offset(a_zGOff)
         # Take the MPU out of sleep mode
         self.__wake_up()
+        # Set offsets
+        if a_xAOff is not None:
+            self.set_x_accel_offset(a_xAOff)
+        if a_yAOff is not None:
+            self.set_y_accel_offset(a_yAOff)
+        if a_zAOff is not None:
+            self.set_z_accel_offset(a_zAOff)
+        if a_xGOff is not None:
+            self.set_x_gyro_offset(a_xGOff)
+        if a_yGOff is not None:
+            self.set_y_gyro_offset(a_xGOff)
+        if a_zGOff is not None:
+            self.set_z_gyro_offset(a_zGOff)
 
     def __wake_up(self):
         self.__write_bit(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_SLEEP_BIT, 0)

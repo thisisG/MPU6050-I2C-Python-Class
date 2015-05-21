@@ -48,7 +48,7 @@ THE SOFTWARE.
 
 from Adafruit_I2C import Adafruit_I2C
 from MPUConstants import MPUConstants as C
-from ctypes import c_int16
+from ctypes import c_int16, c_int8
 
 
 class MPU6050:
@@ -138,16 +138,10 @@ class MPU6050:
         self.__mpu.write16(C.MPU6050_RA_ZA_OFFS_H, a_offset)
 
     def set_x_gyro_offset(self, a_offset):
-        self.__write_bits(
-            C.MPU6050_RA_XG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
-            C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_XG_OFFS_USRH, a_offset)
 
     def set_y_gyro_offset(self, a_offset):
-        self.__write_bits(
-            C.MPU6050_RA_YG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
-            C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_YG_OFFS_USRH, a_offset)
 
     def set_z_gyro_offset(self, a_offset):
-        self.__write_bits(
-            C.MPU6050_RA_ZG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
-            C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_ZG_OFFS_USRH, a_offset)

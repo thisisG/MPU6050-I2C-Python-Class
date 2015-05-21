@@ -55,7 +55,8 @@ class MPU6050:
     __mpu = Adafruit_I2C
     __buffer = [0] * 14
 
-    def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS):
+    def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=0,
+                 a_yAOff=0, a_zAOff=0, a_xGOff=0, a_yGOff=0, a_zGOff=0):
         # Connect to the I2C bus with default address of device as 0x68
         self.__mpu = Adafruit_I2C(a_address)
         # Set clock source to gyro
@@ -64,6 +65,13 @@ class MPU6050:
         self.__set_full_scale_accel_range(C.MPU6050_ACCEL_FS_2)
         # Set gyro range
         self.__set_full_scale_gyro_range(C.MPU6050_GYRO_FS_250)
+        # Set offsets
+        self.setXAccelOffset(a_xAOff)
+        self.setYAccelOffset(a_yAOff)
+        self.setZAccelOffset(a_zAOff)
+        self.setXGyroOffset(a_xGOff)
+        self.setYGyroOffset(a_xGOff)
+        self.setZGyroOffset(a_zGOff)
         # Take the MPU out of sleep mode
         self.__wake_up()
 
@@ -111,3 +119,35 @@ class MPU6050:
         accel[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
         accel[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
         return accel
+
+    def get_rotation(self):
+        raw_data = self.__mpu.readList(C.MPU6050_RA_ACCEL_XOUT_H, 6)
+        gyro = [0]*3
+        gyro[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
+        gyro[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
+        gyro[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
+        return gyro
+
+    def set_x_accel_offset(self, a_offset):
+        self.__mpu.write16(MPU6050_RA_XA_OFFS_H, a_offset)
+
+    def set_y_accel_offset(self, a_offset):
+        self.__mpu.write16(MPU6050_RA_YA_OFFS_H, a_offset)
+
+    def set_z_accel_offset(self, a_offset):
+        self.__mpu.write16(MPU6050_RA_ZA_OFFS_H, a_offset)
+
+    def set_x_accel_offset(self, a_offset):
+        self.__write_bits(
+            C.MPU6050_RA_XG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
+            C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+
+    def set_x_accel_offset(self, a_offset):
+        self.__write_bits(
+            C.MPU6050_RA_YG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
+            C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+
+    def set_x_accel_offset(self, a_offset):
+        self.__write_bits(
+            C.MPU6050_RA_ZG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
+            C.MPU6050_TC_OFFSET_LENGTH, a_offset)

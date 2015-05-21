@@ -66,12 +66,12 @@ class MPU6050:
         # Set gyro range
         self.__set_full_scale_gyro_range(C.MPU6050_GYRO_FS_250)
         # Set offsets
-        self.setXAccelOffset(a_xAOff)
-        self.setYAccelOffset(a_yAOff)
-        self.setZAccelOffset(a_zAOff)
-        self.setXGyroOffset(a_xGOff)
-        self.setYGyroOffset(a_xGOff)
-        self.setZGyroOffset(a_zGOff)
+        self.set_x_accel_offset(a_xAOff)
+        self.set_y_accel_offset(a_yAOff)
+        self.set_z_accel_offset(a_zAOff)
+        self.set_x_gyro_offset(a_xGOff)
+        self.set_y_gyro_offset(a_xGOff)
+        self.set_z_gyro_offset(a_zGOff)
         # Take the MPU out of sleep mode
         self.__wake_up()
 
@@ -137,17 +137,17 @@ class MPU6050:
     def set_z_accel_offset(self, a_offset):
         self.__mpu.write16(MPU6050_RA_ZA_OFFS_H, a_offset)
 
-    def set_x_accel_offset(self, a_offset):
+    def set_x_gyro_offset(self, a_offset):
         self.__write_bits(
             C.MPU6050_RA_XG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
             C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
-    def set_x_accel_offset(self, a_offset):
+    def set_x_gyro_offset(self, a_offset):
         self.__write_bits(
             C.MPU6050_RA_YG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
             C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
-    def set_x_accel_offset(self, a_offset):
+    def set_x_gyro_offset(self, a_offset):
         self.__write_bits(
             C.MPU6050_RA_ZG_OFFS_TC, C.MPU6050_TC_OFFSET_BIT,
             C.MPU6050_TC_OFFSET_LENGTH, a_offset)

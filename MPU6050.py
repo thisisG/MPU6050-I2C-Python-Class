@@ -121,7 +121,7 @@ class MPU6050:
         return accel
 
     def get_rotation(self):
-        raw_data = self.__mpu.readList(C.MPU6050_RA_ACCEL_XOUT_H, 6)
+        raw_data = self.__mpu.readList(C.MPU6050_RA_GYRO_XOUT_H, 6)
         gyro = [0]*3
         gyro[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
         gyro[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value

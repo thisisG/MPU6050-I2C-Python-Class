@@ -136,19 +136,31 @@ class MPU6050:
         return gyro
 
     def set_x_accel_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_XA_OFFS_H, c_int16(a_offset).value)
+        self.__mpu.write8(C.MPU6050_RA_XA_OFFS_H,
+                          c_int8(a_offset >> 8).value)
+        self.__mpu.write8(C.MPU6050_RA_XA_OFFS_L_TC, c_int8(a_offset).value)
 
     def set_y_accel_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_YA_OFFS_H, c_int16(a_offset).value)
+        self.__mpu.write8(C.MPU6050_RA_YA_OFFS_H,
+                          c_int8(a_offset >> 8).value)
+        self.__mpu.write8(C.MPU6050_RA_YA_OFFS_L_TC, c_int8(a_offset).value)
 
     def set_z_accel_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_ZA_OFFS_H, c_int16(a_offset).value)
+        self.__mpu.write8(C.MPU6050_RA_ZA_OFFS_H,
+                          c_int8(a_offset >> 8).value)
+        self.__mpu.write8(C.MPU6050_RA_ZA_OFFS_L_TC, c_int8(a_offset).value)
 
     def set_x_gyro_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_XG_OFFS_USRH, c_int16(a_offset).value)
+        self.__mpu.write8(C.MPU6050_RA_XG_OFFS_USRH,
+                          c_int8(a_offset >> 8).value)
+        self.__mpu.write8(C.MPU6050_RA_XG_OFFS_USRL, c_int8(a_offset).value)
 
     def set_y_gyro_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_YG_OFFS_USRH, c_int16(a_offset).value)
+        self.__mpu.write8(C.MPU6050_RA_YG_OFFS_USRH,
+                          c_int8(a_offset >> 8).value)
+        self.__mpu.write8(C.MPU6050_RA_YG_OFFS_USRL, c_int8(a_offset).value)
 
     def set_z_gyro_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_ZG_OFFS_USRH, c_int16(a_offset).value)
+        self.__mpu.write8(C.MPU6050_RA_ZG_OFFS_USRH,
+                          c_int8(a_offset >> 8).value)
+        self.__mpu.write8(C.MPU6050_RA_ZG_OFFS_USRL, c_int8(a_offset).value)

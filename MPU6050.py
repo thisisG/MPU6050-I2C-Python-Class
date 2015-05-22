@@ -78,7 +78,7 @@ class MPU6050:
         if a_xGOff is not None:
             self.set_x_gyro_offset(a_xGOff)
         if a_yGOff is not None:
-            self.set_y_gyro_offset(a_xGOff)
+            self.set_y_gyro_offset(a_yGOff)
         if a_zGOff is not None:
             self.set_z_gyro_offset(a_zGOff)
 
@@ -91,7 +91,7 @@ class MPU6050:
             byte = byte | (1 << a_bit_num)
         else:
             byte = byte & ~(1 << a_bit_num)
-        self.__mpu.write8(a_reg_add, byte)
+        self.__mpu.write8(a_reg_add, c_int8(byte).value)
 
     def __write_bits(self, a_reg_add, a_bit_start, a_length, a_data):
         byte = self.__mpu.readU8(a_reg_add)
@@ -103,7 +103,7 @@ class MPU6050:
         byte = byte & (~mask)
         byte = byte | a_data
         # Write the data to the I2C device
-        self.__mpu.write8(a_reg_add, byte)
+        self.__mpu.write8(a_reg_add, c_int8(byte).value)
 
     def __set_clock_source(self, a_source):
         self.__write_bits(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_CLKSEL_BIT,
@@ -136,19 +136,19 @@ class MPU6050:
         return gyro
 
     def set_x_accel_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_XA_OFFS_H, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_XA_OFFS_H, c_int16(a_offset).value)
 
     def set_y_accel_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_YA_OFFS_H, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_YA_OFFS_H, c_int16(a_offset).value)
 
     def set_z_accel_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_ZA_OFFS_H, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_ZA_OFFS_H, c_int16(a_offset).value)
 
     def set_x_gyro_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_XG_OFFS_USRH, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_XG_OFFS_USRH, c_int16(a_offset).value)
 
     def set_y_gyro_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_YG_OFFS_USRH, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_YG_OFFS_USRH, c_int16(a_offset).value)
 
     def set_z_gyro_offset(self, a_offset):
-        self.__mpu.write16(C.MPU6050_RA_ZG_OFFS_USRH, a_offset)
+        self.__mpu.write16(C.MPU6050_RA_ZG_OFFS_USRH, c_int16(a_offset).value)

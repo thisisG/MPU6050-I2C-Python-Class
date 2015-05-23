@@ -200,24 +200,45 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize,
         a_prog_buffer = [0]*C.MPU6050_DMP_MEMORY_CHUNK_SIZE
 
     '''
-    for (i = 0; i < dataSize;) {
-        // determine correct chunk size according to bank position and data size
+    for (i = 0; i < dataSize;)
+    '''
+    for i in range(0, a_data_size):
+        # determine correct chunk size according to bank position and data size
+        '''
         chunkSize = MPU6050_DMP_MEMORY_CHUNK_SIZE;
-
-        // make sure we don't go past the data size
+        '''
+        chunck_size = C.MPU6050_DMP_MEMORY_CHUNK_SIZE
+        # make sure we don't go past the data size
+        '''
         if (i + chunkSize > dataSize) chunkSize = dataSize - i;
-
-        // make sure this chunk doesn't go past the bank boundary (256 bytes)
+        '''
+        if i + chunck_size > a_data_size:
+            chunck_size = a_data_size - i
+        # make sure this chunk doesn't go past the bank boundary (256 bytes)
+        '''
         if (chunkSize > 256 - address) chunkSize = 256 - address;
-
-        if (useProgMem) {
-            // write the chunk of data as specified
+        '''
+        if chunck_size > 256 - a_address:
+            chunck_size = 256 - a_address
+        '''
+        if (useProgMem)
+        '''
+        if a_use_prog_mem:
+            # write the chunk of data as specified
+            '''
             for (j = 0; j < chunkSize; j++) progBuffer[j] = pgm_read_byte(data + i + j);
-        } else {
-            // write the chunk of data as specified
+            '''
+            for j in range(0, chunck_size):
+                a_prog_buffer[j] = a_data_list[i+j]
+        '''
+        else
+        '''
+            # write the chunk of data as specified
+            '''
             progBuffer = (uint8_t *)data + i;
-        }
+            '''
 
+        '''
         I2Cdev::writeBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, progBuffer);
 
         // verify data if needed

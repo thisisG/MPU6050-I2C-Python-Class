@@ -172,19 +172,104 @@ class MPU6050:
         self.__mpu.write8(C.MPU6050_RA_USER_CTRL,
                           C.MPU6050_USERCTRL_I2C_MST_RESET_BIT, 1)
 
-    '''
-    declaration:
-    bool writeProgMemoryBlock(const uint8_t *data, uint16_t dataSize,
-    uint8_t bank=0, uint8_t address=0, bool verify=true);
+'''
+bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize,
+                               uint8_t bank, uint8_t address, bool verify,
+                               bool useProgMem)
+'''
 
-    implementation:
-    bool MPU6050::writeProgMemoryBlock(const uint8_t *data, uint16_t dataSize,
-    uint8_t bank, uint8_t address, bool verify) {
-    return writeMemoryBlock(data, dataSize, bank, address, verify, true);
+    def write_memory_block(self, a_data_list, a_data_size, a_bank, a_verify,
+                           a_use_prog_mem):
+'''
+    setMemoryBank(bank);
+    setMemoryStartAddress(address);
+    uint8_t chunkSize;
+    uint8_t *verifyBuffer;
+    uint8_t *progBuffer;
+    uint16_t i;
+    uint8_t j;
+    if (verify) verifyBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
     '''
+    if a_verify:
+        verify_buffer = [0]*C.MPU6050_DMP_MEMORY_CHUNK_SIZE
+
+    '''
+    if (useProgMem) progBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
+    '''
+    if a_use_prog_mem:
+        a_prog_buffer = [0]*C.MPU6050_DMP_MEMORY_CHUNK_SIZE
+
+    '''
+    for (i = 0; i < dataSize;) {
+        // determine correct chunk size according to bank position and data size
+        chunkSize = MPU6050_DMP_MEMORY_CHUNK_SIZE;
+
+        // make sure we don't go past the data size
+        if (i + chunkSize > dataSize) chunkSize = dataSize - i;
+
+        // make sure this chunk doesn't go past the bank boundary (256 bytes)
+        if (chunkSize > 256 - address) chunkSize = 256 - address;
+
+        if (useProgMem) {
+            // write the chunk of data as specified
+            for (j = 0; j < chunkSize; j++) progBuffer[j] = pgm_read_byte(data + i + j);
+        } else {
+            // write the chunk of data as specified
+            progBuffer = (uint8_t *)data + i;
+        }
+
+        I2Cdev::writeBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, progBuffer);
+
+        // verify data if needed
+        if (verify && verifyBuffer) {
+            setMemoryBank(bank);
+            setMemoryStartAddress(address);
+            I2Cdev::readBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, verifyBuffer);
+            if (memcmp(progBuffer, verifyBuffer, chunkSize) != 0) {
+                /*Serial.print("Block write verification error, bank ");
+                Serial.print(bank, DEC);
+                Serial.print(", address ");
+                Serial.print(address, DEC);
+                Serial.print("!\nExpected:");
+                for (j = 0; j < chunkSize; j++) {
+                    Serial.print(" 0x");
+                    if (progBuffer[j] < 16) Serial.print("0");
+                    Serial.print(progBuffer[j], HEX);
+                }
+                Serial.print("\nReceived:");
+                for (uint8_t j = 0; j < chunkSize; j++) {
+                    Serial.print(" 0x");
+                    if (verifyBuffer[i + j] < 16) Serial.print("0");
+                    Serial.print(verifyBuffer[i + j], HEX);
+                }
+                Serial.print("\n");*/
+                free(verifyBuffer);
+                if (useProgMem) free(progBuffer);
+                return false; // uh oh.
+            }
+        }
+
+        // increase byte index by [chunkSize]
+        i += chunkSize;
+
+        // uint8_t automatically wraps to 0 at 256
+        address += chunkSize;
+
+        // if we aren't done, update bank (if necessary) and address
+        if (i < dataSize) {
+            if (address == 0) bank++;
+            setMemoryBank(bank);
+            setMemoryStartAddress(address);
+        }
+    }
+    if (verify) free(verifyBuffer);
+    if (useProgMem) free(progBuffer);
+    return true;
+}'''
 
     def write_prog_memory_block(self, a_data_list, a_data_size, a_bank=0,
                                 a_address=0, a_verify=True):
+        return write_memory_block(a_data_list, a_data_size, a_bank, a_address, a_verify)
 
     def dmp_initialize(self):
         # Reset the MPU

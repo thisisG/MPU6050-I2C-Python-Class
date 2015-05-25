@@ -90,7 +90,7 @@ class MPU6050:
 
     def write_bit(self, a_reg_add, a_bit_num, a_data):
         byte = self.__mpu.readU8(a_reg_add)
-        if a_data == 1:
+        if a_data == 1 || a_data == True:
             byte = byte | (1 << a_bit_num)
         else:
             byte = byte & ~(1 << a_bit_num)
@@ -148,20 +148,35 @@ class MPU6050:
         byte = byte >> (a_bit_start - a_length + 1)
         return byte
 
-    def get_x_gyro_offset_tc(self):
+    def get_x_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_XG_OFFS_TC,
                               C.MPU6050_TC_OFFSET_BIT,
                               C.MPU6050_TC_OFFSET_LENGTH)
 
-    def get_y_gyro_offset_tc(self):
+    def set_x_gyro_offset_TC(self, a_offset):
+        self.__mpu.write_bits(C.MPU6050_RA_XG_OFFS_TC,
+                              C.MPU6050_TC_OFFSET_BIT,
+                              C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+
+    def get_y_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_YG_OFFS_TC,
                               C.MPU6050_TC_OFFSET_BIT,
                               C.MPU6050_TC_OFFSET_LENGTH)
 
-    def get_z_gyro_offset_tc(self):
+    def set_y_gyro_offset_TC(self, a_offset):
+        self.__mpu.write_bits(C.MPU6050_RA_YG_OFFS_TC,
+                              C.MPU6050_TC_OFFSET_BIT,
+                              C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+
+    def get_z_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_ZG_OFFS_TC,
                               C.MPU6050_TC_OFFSET_BIT,
                               C.MPU6050_TC_OFFSET_LENGTH)
+
+    def set_z_gyro_offset_TC(self, a_offset):
+        self.__mpu.write_bits(C.MPU6050_RA_ZG_OFFS_TC,
+                              C.MPU6050_TC_OFFSET_BIT,
+                              C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
     def set_slave_address(self, a_num, a_address):
         self.__mpu.write8(C.MPU6050_RA_I2C_SLV0_ADDR + a_num*3, a_address)
@@ -257,6 +272,21 @@ class MPU6050:
         self.__mpu.write_bits(C.MPU6050_RA_CONFIG, C.MPU6050_CFG_DLPF_CFG_BIT,
                               C.MPU6050_CFG_DLPF_CFG_LENGTH, a_mode)
 
+    def get_DMP_config_1(self):
+        return self.__mpu.readU8(C.MPU6050_RA_DMP_CFG_1)
+
+    def set_DMP_config_1(self, a_config):
+        self.__mpu.write8(C.MPU6050_RA_DMP_CFG_1, a_config)
+
+    def get_DMP_config_2(self):
+        return self.__mpu.readU8(C.MPU6050_RA_DMP_CFG_2)
+
+    def set_DMP_config_2(self, a_config):
+        self.__mpu.write8(C.MPU6050_RA_DMP_CFG_2, a_config)
+
+    def set_OTP_bank_valid(self, a_enabled):
+        self.write_bit(C.MPU6050_RA_XG_OFFS_TC, C.MPU6050_TC_OTP_BNK_VLD_BIT, a_enabled)
+
     def dmp_initialize(self):
         # Reset the MPU
         self.reset()
@@ -294,9 +324,9 @@ class MPU6050:
         int8_t xgOffsetTC = getXGyroOffsetTC();
         int8_t ygOffsetTC = getYGyroOffsetTC();
         int8_t zgOffsetTC = getZGyroOffsetTC();'''
-        x_g_offset_tc = self.get_x_gyro_offset_tc()
-        y_g_offset_tc = self.get_y_gyro_offset_tc()
-        z_g_offset_tc = self.get_z_gyro_offset_tc()
+        x_g_offset_TC = self.get_x_gyro_offset_TC()
+        y_g_offset_TC = self.get_y_gyro_offset_TC()
+        z_g_offset_TC = self.get_z_gyro_offset_TC()
         '''DEBUG_PRINT(F("X gyro offset = "));
         DEBUG_PRINTLN(xgOffset);
         DEBUG_PRINT(F("Y gyro offset = "));
@@ -350,7 +380,7 @@ class MPU6050:
                 DEBUG_PRINTLN(F("Success! DMP configuration written and verified."));
 
                 DEBUG_PRINTLN(F("Setting clock source to Z Gyro..."));
-                setClockSource(MPU6050_CLOCK_PLL_ZGYRO);
+                seTClockSource(MPU6050_CLOCK_PLL_ZGYRO);
                 '''
                 self.set_clock_source(C.MPU6050_CLOCK_PLL_ZGYRO)
                 '''
@@ -383,35 +413,48 @@ class MPU6050:
                 setDMPConfig1(0x03);
                 setDMPConfig2(0x00);
                 '''
-                # TODO
+                set_DMP_config_1(0x03)
+                set_DMP_config_2(0x00)
                 '''
                 DEBUG_PRINTLN(F("Clearing OTP Bank flag..."));
                 setOTPBankValid(false);
                 '''
-                # TODO
+                set_OTP_bank_valid(0)
                 '''
                 DEBUG_PRINTLN(F("Setting X/Y/Z gyro offset TCs to previous values..."));
                 setXGyroOffsetTC(xgOffsetTC);
                 setYGyroOffsetTC(ygOffsetTC);
                 setZGyroOffsetTC(zgOffsetTC);
                 '''
-                # TODO
+                set_x_gyro_oggset_TC(x_g_offset_TC)
+                set_y_gyro_oggset_TC(y_g_offset_TC)
+                set_z_gyro_oggset_TC(z_g_offset_TC)
                 '''
                 //DEBUG_PRINTLN(F("Setting X/Y/Z gyro user offsets to zero..."));
                 //setXGyroOffset(0);
                 //setYGyroOffset(0);
                 //setZGyroOffset(0);
-
+                '''
+                set_x_gyro_offset(0)
+                set_y_gyro_offset(0)
+                set_z_gyro_offset(0)
+                '''
                 DEBUG_PRINTLN(F("Writing final memory update 1/7 (function unknown)..."));
                 uint8_t dmpUpdate[16], j;
                 uint16_t pos = 0;
-                for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
+                for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++)
+                {
+                    dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
+                }
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
                 # TODO
                 '''
                 DEBUG_PRINTLN(F("Writing final memory update 2/7 (function unknown)..."));
-                for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
+                for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++)
+                {
+                    dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
+                }
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
                 # TODO

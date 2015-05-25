@@ -55,10 +55,11 @@ from time import sleep
 class MPU6050:
     __mpu = Adafruit_I2C
     __buffer = [0] * 14
+    __debug = False
 
     def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=None,
                  a_yAOff=None, a_zAOff=None, a_xGOff=None, a_yGOff=None,
-                 a_zGOff=None):
+                 a_zGOff=None, a_debug=False):
         # Connect to the I2C bus with default address of device as 0x68
         self.__mpu = Adafruit_I2C(a_address)
         # Set clock source to gyro
@@ -70,18 +71,19 @@ class MPU6050:
         # Take the MPU out of sleep mode
         self.wake_up()
         # Set offsets
-        if a_xAOff is not None:
+        if a_xAOff != None:
             self.set_x_accel_offset(a_xAOff)
-        if a_yAOff is not None:
+        if a_yAOff != None:
             self.set_y_accel_offset(a_yAOff)
-        if a_zAOff is not None:
+        if a_zAOff != None:
             self.set_z_accel_offset(a_zAOff)
-        if a_xGOff is not None:
+        if a_xGOff != None:
             self.set_x_gyro_offset(a_xGOff)
-        if a_yGOff is not None:
+        if a_yGOff != None:
             self.set_y_gyro_offset(a_yGOff)
-        if a_zGOff is not None:
+        if a_zGOff != None:
             self.set_z_gyro_offset(a_zGOff)
+        self.__debug = a_debug
 
     def wake_up(self):
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_SLEEP_BIT, 0)
@@ -130,9 +132,9 @@ class MPU6050:
 
     def set_memory_bank(self, a_bank, a_prefetch_enabled, a_user_bank):
         a_bank = a_bank & 0x1F
-        if a_user_bank is True:
+        if a_user_bank == True:
             a_bank = a_bank | 0x20
-        if a_prefetch_enabled is True:
+        if a_prefetch_enabled == True:
             a_bank = a_bank | 0x20
         self.__mpu.write8(C.MPU6050_RA_BANK_SEL, a_bank)
 
@@ -172,125 +174,88 @@ class MPU6050:
         self.__mpu.write8(C.MPU6050_RA_USER_CTRL,
                           C.MPU6050_USERCTRL_I2C_MST_RESET_BIT, 1)
 
-'''
-bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize,
-                               uint8_t bank, uint8_t address, bool verify,
-                               bool useProgMem)
-'''
+    def write_memory_block(self, a_data_list, a_data_size, a_bank, a_verify):
+        set_memory_bank(a_bank)
+        set_memory_start_address(a_address)
 
-    def write_memory_block(self, a_data_list, a_data_size, a_bank, a_verify,
-                           a_use_prog_mem):
-'''
-    setMemoryBank(bank);
-    setMemoryStartAddress(address);
-    uint8_t chunkSize;
-    uint8_t *verifyBuffer;
-    uint8_t *progBuffer;
-    uint16_t i;
-    uint8_t j;
-    if (verify) verifyBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
-    '''
-    if a_verify:
-        verify_buffer = [0]*C.MPU6050_DMP_MEMORY_CHUNK_SIZE
+        # For each a_data_item we want to write it to the board to a certain
+        # memory bank and address
+        for i in range(0, a_data_size):
+            # Write each data to memory
+            self.__mpu.write8(C.MPU6050_RA_MEM_R_W, a_data_list[i])
 
-    '''
-    if (useProgMem) progBuffer = (uint8_t *)malloc(MPU6050_DMP_MEMORY_CHUNK_SIZE);
-    '''
-    if a_use_prog_mem:
-        a_prog_buffer = [0]*C.MPU6050_DMP_MEMORY_CHUNK_SIZE
+            if a_verify:
+                # TODO implement verification
+                pass
 
-    '''
-    for (i = 0; i < dataSize;)
-    '''
-    for i in range(0, a_data_size):
-        # determine correct chunk size according to bank position and data size
-        '''
-        chunkSize = MPU6050_DMP_MEMORY_CHUNK_SIZE;
-        '''
-        chunck_size = C.MPU6050_DMP_MEMORY_CHUNK_SIZE
-        # make sure we don't go past the data size
-        '''
-        if (i + chunkSize > dataSize) chunkSize = dataSize - i;
-        '''
-        if i + chunck_size > a_data_size:
-            chunck_size = a_data_size - i
-        # make sure this chunk doesn't go past the bank boundary (256 bytes)
-        '''
-        if (chunkSize > 256 - address) chunkSize = 256 - address;
-        '''
-        if chunck_size > 256 - a_address:
-            chunck_size = 256 - a_address
-        '''
-        if (useProgMem)
-        '''
-        if a_use_prog_mem:
-            # write the chunk of data as specified
-            '''
-            for (j = 0; j < chunkSize; j++) progBuffer[j] = pgm_read_byte(data + i + j);
-            '''
-            for j in range(0, chunck_size):
-                a_prog_buffer[j] = a_data_list[i+j]
-        '''
-        else
-        '''
-            # write the chunk of data as specified
-            '''
-            progBuffer = (uint8_t *)data + i;
-            '''
+            # If we've filled the bank, change the memory bank
+            if a_address == 255:
+                a_address = 0
+                a_bank += 1
+                set_memory_bank(a_bank)
+            else:
+                a_address += 1
 
-        '''
-        I2Cdev::writeBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, progBuffer);
+            # Either way update the memory address
+            set_memory_start_address(a_address)
 
-        // verify data if needed
-        if (verify && verifyBuffer) {
-            setMemoryBank(bank);
-            setMemoryStartAddress(address);
-            I2Cdev::readBytes(devAddr, MPU6050_RA_MEM_R_W, chunkSize, verifyBuffer);
-            if (memcmp(progBuffer, verifyBuffer, chunkSize) != 0) {
-                /*Serial.print("Block write verification error, bank ");
-                Serial.print(bank, DEC);
-                Serial.print(", address ");
-                Serial.print(address, DEC);
-                Serial.print("!\nExpected:");
-                for (j = 0; j < chunkSize; j++) {
-                    Serial.print(" 0x");
-                    if (progBuffer[j] < 16) Serial.print("0");
-                    Serial.print(progBuffer[j], HEX);
-                }
-                Serial.print("\nReceived:");
-                for (uint8_t j = 0; j < chunkSize; j++) {
-                    Serial.print(" 0x");
-                    if (verifyBuffer[i + j] < 16) Serial.print("0");
-                    Serial.print(verifyBuffer[i + j], HEX);
-                }
-                Serial.print("\n");*/
-                free(verifyBuffer);
-                if (useProgMem) free(progBuffer);
-                return false; // uh oh.
-            }
-        }
-
-        // increase byte index by [chunkSize]
-        i += chunkSize;
-
-        // uint8_t automatically wraps to 0 at 256
-        address += chunkSize;
-
-        // if we aren't done, update bank (if necessary) and address
-        if (i < dataSize) {
-            if (address == 0) bank++;
-            setMemoryBank(bank);
-            setMemoryStartAddress(address);
-        }
-    }
-    if (verify) free(verifyBuffer);
-    if (useProgMem) free(progBuffer);
-    return true;
-}'''
+        # TODO Implement a check to ensure the thrutiness of the function, most
+        # likely using the verify stage
+        return True
 
     def write_prog_memory_block(self, a_data_list, a_data_size, a_bank=0,
                                 a_address=0, a_verify=True):
-        return write_memory_block(a_data_list, a_data_size, a_bank, a_address, a_verify)
+        return write_memory_block(a_data_list, a_data_size, a_bank, a_address,
+                                  a_verify)
+
+    def write_DMP_configuration_set(self, a_data_list, a_data_size):
+        index = 0
+        while index < a_data_size:
+            bank = a_data_list[index]
+            offset = a_data_list[index+1]
+            length = a_data_list[index+2]
+            index += 3
+            success = False
+
+            # Normal case
+            if length > 0:
+                data_selection = list()
+                for subindex in range(0, length):
+                    data_selection.append(a_data_list[index + subindex])
+                success = self.write_memory_block(data_selection, length, bank,
+                                                  offset, True)
+                index += length
+            # Special undocumented case
+            else:
+                special = a_data_list[index]
+                index += 1
+                if special == 0x01:
+                    # TODO Figure out if this can return True/False
+                    success = self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, 0x32)
+
+            if success == False:
+                # TODO implement error messagemajigger
+                return False
+                pass
+        return True
+
+    def write_prog_dmp_configuration_set(self, a_data_list, a_data_size):
+        return writeDMPConfigurationSet(a_data_list, a_data_size)
+
+    def set_int_enable(self, a_enabled):
+        self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, a_enabled)
+
+    def set_rate(self, a_rate):
+        self.__mpu.write8(C.SMPLRT_DIV, a_rate)
+
+    def set_external_frame_sync(self, a_sync):
+        self.__mpu.write_bits(C.MPU6050_RA_CONFIG,
+                              C.MPU6050_CFG_EXT_SYNC_SET_BIT,
+                              C.MPU6050_CFG_EXT_SYNC_SET_LENGTH, a_sync)
+
+    def set_DLF_mode(self, a_mode):
+        self.__mpu.write_bits(C.MPU6050_RA_CONFIG, C.MPU6050_CFG_DLPF_CFG_BIT,
+                              C.MPU6050_CFG_DLPF_CFG_LENGTH, a_mode)
 
     def dmp_initialize(self):
         # Reset the MPU
@@ -363,7 +328,6 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize,
         '''
         if (writeProgMemoryBlock(dmpMemory, MPU6050_DMP_CODE_SIZE))
         '''
-        # TODO implement write_prog_memory_block
         if write_prog_memory_block(C.dmpMemory, C.MPU6050_DMP_CODE_SIZE):
 
             '''
@@ -379,7 +343,6 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize,
 
             if (writeProgDMPConfigurationSet(dmpConfig, MPU6050_DMP_CONFIG_SIZE))
             '''
-            # TODO implement write_prog_dmp_configuration_set
             if write_prog_dmp_configuration_set(C.dmpConfig,
                                                 C.MPU6050_DMP_CONFIG_SIZE):
 
@@ -389,32 +352,32 @@ bool MPU6050::writeMemoryBlock(const uint8_t *data, uint16_t dataSize,
                 DEBUG_PRINTLN(F("Setting clock source to Z Gyro..."));
                 setClockSource(MPU6050_CLOCK_PLL_ZGYRO);
                 '''
-                # TODO
+                self.set_clock_source(C.MPU6050_CLOCK_PLL_ZGYRO)
                 '''
                 DEBUG_PRINTLN(F("Setting DMP and FIFO_OFLOW interrupts enabled..."));
                 setIntEnabled(0x12);
                 '''
-                # TODO
+                set_int_enable(0x12)
                 '''
                 DEBUG_PRINTLN(F("Setting sample rate to 200Hz..."));
                 setRate(4); // 1khz / (1 + 4) = 200 Hz
                 '''
-                # TODO
+                set_rate(4)
                 '''
                 DEBUG_PRINTLN(F("Setting external frame sync to TEMP_OUT_L[0]..."));
                 setExternalFrameSync(MPU6050_EXT_SYNC_TEMP_OUT_L);
                 '''
-                # TODO
+                set_external_frame_sync(C.MPU6050_EXT_SYNC_TEMP_OUT_L)
                 '''
                 DEBUG_PRINTLN(F("Setting DLPF bandwidth to 42Hz..."));
                 setDLPFMode(MPU6050_DLPF_BW_42);
                 '''
-                # TODO
+                set_DLF_mode(C.MPU6050_DLPF_BW_42)
                 '''
                 DEBUG_PRINTLN(F("Setting gyro sensitivity to +/- 2000 deg/sec..."));
                 setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
                 '''
-                # TODO
+                set_full_scale_gyro_range(C.MPU6050_GYRO_FS_2000)
                 '''
                 DEBUG_PRINTLN(F("Setting DMP configuration bytes (function unknown)..."));
                 setDMPConfig1(0x03);

@@ -1,3 +1,5 @@
+from numpy.f2py.auxfuncs import throw_error
+
 __author__ = 'Geir Istad'
 '''
 MPU6050 Python I2C Class
@@ -88,13 +90,20 @@ class MPU6050:
     def wake_up(self):
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_SLEEP_BIT, 0)
 
-    def write_bit(self, a_reg_add, a_bit_num, a_data):
+    def write_bit(self, a_reg_add, a_bit_num, a_bit):
         byte = self.__mpu.readU8(a_reg_add)
-        if a_data == 1 || a_data == True:
+        if (a_bit == 1) or (a_bit == True):
             byte = byte | (1 << a_bit_num)
         else:
             byte = byte & ~(1 << a_bit_num)
         self.__mpu.write8(a_reg_add, c_int8(byte).value)
+
+    def read_bits(self, a_reg_add, a_bit_start, a_length):
+        byte = self.__mpu.readU8(a_reg_add)
+        mask = ((1 << a_length) - 1) << (a_bit_start - a_length + 1)
+        byte = byte & mask
+        byte = byte >> (a_bit_start - a_length + 1)
+        return byte
 
     def write_bits(self, a_reg_add, a_bit_start, a_length, a_data):
         byte = self.__mpu.readU8(a_reg_add)
@@ -127,8 +136,11 @@ class MPU6050:
                        C.MPU6050_PWR1_DEVICE_RESET_BIT, 1)
 
     def set_sleep_enabled(self, a_enabled):
+        set_bit = 0
+        if (a_enabled == 1) or (a_enabled == True):
+            set_bit = 1
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1,
-                       C.MPU6050_PWR1_SLEEP_BIT, a_enabled)
+                       C.MPU6050_PWR1_SLEEP_BIT, set_bit)
 
     def set_memory_bank(self, a_bank, a_prefetch_enabled, a_user_bank):
         a_bank = a_bank & 0x1F
@@ -140,13 +152,6 @@ class MPU6050:
 
     def set_memory_start_address(self, a_address):
         self.__mpu.write8(C.MPU6050_RA_MEM_START_ADDR, a_address)
-
-    def read_bits(self, a_reg_add, a_bit_start, a_length):
-        byte = self.__mpu.readU8(a_reg_add)
-        mask = ((1 << a_length) - 1) << (a_bit_start - a_length + 1)
-        byte = byte & mask
-        byte = byte >> (a_bit_start - a_length + 1)
-        return byte
 
     def get_x_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_XG_OFFS_TC,
@@ -181,7 +186,7 @@ class MPU6050:
     def set_slave_address(self, a_num, a_address):
         self.__mpu.write8(C.MPU6050_RA_I2C_SLV0_ADDR + a_num*3, a_address)
 
-    def set_I2C_master_mode_enabled(a_enabled):
+    def set_I2C_master_mode_enabled(self, a_enabled):
         self.__mpu.write8(C.MPU6050_RA_USER_CTRL,
                           C.MPU6050_USERCTRL_I2C_MST_EN_BIT, a_enabled)
 
@@ -189,9 +194,10 @@ class MPU6050:
         self.__mpu.write8(C.MPU6050_RA_USER_CTRL,
                           C.MPU6050_USERCTRL_I2C_MST_RESET_BIT, 1)
 
-    def write_memory_block(self, a_data_list, a_data_size, a_bank, a_verify):
-        set_memory_bank(a_bank)
-        set_memory_start_address(a_address)
+    def write_memory_block(self, a_data_list, a_data_size, a_bank, a_address,
+                           a_verify):
+        self.set_memory_bank(a_bank)
+        self.set_memory_start_address(a_address)
 
         # For each a_data_item we want to write it to the board to a certain
         # memory bank and address
@@ -207,12 +213,12 @@ class MPU6050:
             if a_address == 255:
                 a_address = 0
                 a_bank += 1
-                set_memory_bank(a_bank)
+                self.set_memory_bank(a_bank)
             else:
                 a_address += 1
 
             # Either way update the memory address
-            set_memory_start_address(a_address)
+            self.set_memory_start_address(a_address)
 
         # TODO Implement a check to ensure the thrutiness of the function, most
         # likely using the verify stage
@@ -220,8 +226,8 @@ class MPU6050:
 
     def write_prog_memory_block(self, a_data_list, a_data_size, a_bank=0,
                                 a_address=0, a_verify=True):
-        return write_memory_block(a_data_list, a_data_size, a_bank, a_address,
-                                  a_verify)
+        return self.write_memory_block(a_data_list, a_data_size, a_bank,
+                                       a_address, a_verify)
 
     def write_DMP_configuration_set(self, a_data_list, a_data_size):
         index = 0
@@ -255,7 +261,7 @@ class MPU6050:
         return True
 
     def write_prog_dmp_configuration_set(self, a_data_list, a_data_size):
-        return writeDMPConfigurationSet(a_data_list, a_data_size)
+        return self.writeDMPConfigurationSet(a_data_list, a_data_size)
 
     def set_int_enable(self, a_enabled):
         self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, a_enabled)
@@ -285,7 +291,59 @@ class MPU6050:
         self.__mpu.write8(C.MPU6050_RA_DMP_CFG_2, a_config)
 
     def set_OTP_bank_valid(self, a_enabled):
-        self.write_bit(C.MPU6050_RA_XG_OFFS_TC, C.MPU6050_TC_OTP_BNK_VLD_BIT, a_enabled)
+        self.write_bit(
+            C.MPU6050_RA_XG_OFFS_TC, C.MPU6050_TC_OTP_BNK_VLD_BIT, a_enabled)
+
+    def reset_FIFO(self):
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_FIFO_RESET_BIT, True)
+
+    def read_bytes(self, a_data_list, a_address, a_length):
+        if a_length > len(a_data_list):
+            print('read_bytes, length of passed list too short')
+            return a_data_list
+        for x in xrange(0, a_length):
+            a_data_list[0] = self.__mpu.readU8(a_address + x)
+        return a_data_list
+
+    def get_FIFO_count(self):
+        data = [0]*2
+        data = read_bytes(data, C.MPU6050_ra_FIFO_COUNTH, 2)
+        return (data[0] << 8) | data[1]
+
+    def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
+        data = self.read_bytes(a_FIFO_buffer, C.MPU6050_RA_FIFO_R_W,
+                               a_FIFO_count)
+
+    def set_motion_detection_threshold(self, a_threshold):
+        self.__mpu.write8(C.MPU6050_RA_MOT_THR, a_threshold)
+
+    def set_zero_motion_detection_threshold(self, a_threshold):
+        self.__mpu.write8(C.MPU6050_RA_ZRMOT_THR, a_threshold)
+
+    def set_motion_detection_duration(self, a_duration):
+        self.__mpu.write8(C.MPU6050_RA_MOT_DUR, a_duration)
+
+    def set_zero_motion_detection_duration(self, a_duration):
+        self.__mpu.write8(C.MPU6050_RA_ZRMOT_DUR, a_duration)
+
+    def set_FIFO_enabled(self, a_enabled):
+        bit = 0
+        if (a_enabled == 1) or (a_enabled == True):
+            bit = 1
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_FIFO_EN_BIT, bit)
+
+    def set_DMP_enabled(self, a_enabled):
+        bit = 0
+        if (a_enabled == 1) or (a_enabled == True):
+            bit = 1
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_DMP_EN_BIT, bit)
+
+    def reset_DMP(self):
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_DMP_RESET_BIT, True)
 
     def dmp_initialize(self):
         # Reset the MPU
@@ -358,7 +416,7 @@ class MPU6050:
         '''
         if (writeProgMemoryBlock(dmpMemory, MPU6050_DMP_CODE_SIZE))
         '''
-        if write_prog_memory_block(C.dmpMemory, C.MPU6050_DMP_CODE_SIZE):
+        if self.write_prog_memory_block(C.dmpMemory, C.MPU6050_DMP_CODE_SIZE):
 
             '''
             DEBUG_PRINTLN(F("Success! DMP code written and verified."));
@@ -373,8 +431,8 @@ class MPU6050:
 
             if (writeProgDMPConfigurationSet(dmpConfig, MPU6050_DMP_CONFIG_SIZE))
             '''
-            if write_prog_dmp_configuration_set(C.dmpConfig,
-                                                C.MPU6050_DMP_CONFIG_SIZE):
+            if self.write_prog_dmp_configuration_set(C.dmpConfig,
+                                                     C.MPU6050_DMP_CONFIG_SIZE):
 
                 '''
                 DEBUG_PRINTLN(F("Success! DMP configuration written and verified."));
@@ -387,34 +445,34 @@ class MPU6050:
                 DEBUG_PRINTLN(F("Setting DMP and FIFO_OFLOW interrupts enabled..."));
                 setIntEnabled(0x12);
                 '''
-                set_int_enable(0x12)
+                self.set_int_enable(0x12)
                 '''
                 DEBUG_PRINTLN(F("Setting sample rate to 200Hz..."));
                 setRate(4); // 1khz / (1 + 4) = 200 Hz
                 '''
-                set_rate(4)
+                self.set_rate(4)
                 '''
                 DEBUG_PRINTLN(F("Setting external frame sync to TEMP_OUT_L[0]..."));
                 setExternalFrameSync(MPU6050_EXT_SYNC_TEMP_OUT_L);
                 '''
-                set_external_frame_sync(C.MPU6050_EXT_SYNC_TEMP_OUT_L)
+                self.set_external_frame_sync(C.MPU6050_EXT_SYNC_TEMP_OUT_L)
                 '''
                 DEBUG_PRINTLN(F("Setting DLPF bandwidth to 42Hz..."));
                 setDLPFMode(MPU6050_DLPF_BW_42);
                 '''
-                set_DLF_mode(C.MPU6050_DLPF_BW_42)
+                self.set_DLF_mode(C.MPU6050_DLPF_BW_42)
                 '''
                 DEBUG_PRINTLN(F("Setting gyro sensitivity to +/- 2000 deg/sec..."));
                 setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
                 '''
-                set_full_scale_gyro_range(C.MPU6050_GYRO_FS_2000)
+                self.set_full_scale_gyro_range(C.MPU6050_GYRO_FS_2000)
                 '''
                 DEBUG_PRINTLN(F("Setting DMP configuration bytes (function unknown)..."));
                 setDMPConfig1(0x03);
                 setDMPConfig2(0x00);
                 '''
-                set_DMP_config_1(0x03)
-                set_DMP_config_2(0x00)
+                self.set_DMP_config_1(0x03)
+                self.set_DMP_config_2(0x00)
                 '''
                 DEBUG_PRINTLN(F("Clearing OTP Bank flag..."));
                 setOTPBankValid(false);
@@ -426,18 +484,18 @@ class MPU6050:
                 setYGyroOffsetTC(ygOffsetTC);
                 setZGyroOffsetTC(zgOffsetTC);
                 '''
-                set_x_gyro_oggset_TC(x_g_offset_TC)
-                set_y_gyro_oggset_TC(y_g_offset_TC)
-                set_z_gyro_oggset_TC(z_g_offset_TC)
+                self.set_x_gyro_oggset_TC(x_g_offset_TC)
+                self.set_y_gyro_oggset_TC(y_g_offset_TC)
+                self.set_z_gyro_oggset_TC(z_g_offset_TC)
                 '''
                 //DEBUG_PRINTLN(F("Setting X/Y/Z gyro user offsets to zero..."));
                 //setXGyroOffset(0);
                 //setYGyroOffset(0);
                 //setZGyroOffset(0);
                 '''
-                set_x_gyro_offset(0)
-                set_y_gyro_offset(0)
-                set_z_gyro_offset(0)
+                self.set_x_gyro_offset(0)
+                self.set_y_gyro_offset(0)
+                self.set_z_gyro_offset(0)
                 '''
                 DEBUG_PRINTLN(F("Writing final memory update 1/7 (function unknown)..."));
                 uint8_t dmpUpdate[16], j;
@@ -448,7 +506,16 @@ class MPU6050:
                 }
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
-                # TODO
+                pos = 0
+                j = 0
+                dmp_update = [0]*16
+                while (j < 4) or (j < dmp_update[2]+3):
+                    dmp_update[j] = C.dmpUpdates[pos]
+                    pos += 1
+                    j +=1
+                # Write as block from pos 3
+                self.write_memory_block(dmp_update[3:], dmp_update[2],
+                                        dmp_update[0], dmp_update[1])
                 '''
                 DEBUG_PRINTLN(F("Writing final memory update 2/7 (function unknown)..."));
                 for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++)
@@ -457,94 +524,129 @@ class MPU6050:
                 }
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
-                # TODO
+                j = 0
+                while (j < 4) or (j < dmp_update[2]+3):
+                    dmp_update[j] = C.dmpUpdates[pos]
+                    pos += 1
+                    j +=1
+                # Write as block from pos 3
+                self.write_memory_block(dmp_update[3:], dmp_update[2],
+                                        dmp_update[0], dmp_update[1])
                 '''
                 DEBUG_PRINTLN(F("Resetting FIFO..."));
                 resetFIFO();
                 '''
-                # TODO
+                self.reset_FIFO()
                 '''
                 DEBUG_PRINTLN(F("Reading FIFO count..."));
                 uint16_t fifoCount = getFIFOCount();
-                uint8_t fifoBuffer[128];
                 '''
-                # TODO
+                FIFO_count = self.get_FIFO_count()
                 '''
                 DEBUG_PRINT(F("Current FIFO count="));
                 DEBUG_PRINTLN(fifoCount);
+                uint8_t fifoBuffer[128];
                 getFIFOBytes(fifoBuffer, fifoCount);
                 '''
-                # TODO
+                FIFO_buffer = [0]*128
+                FIFO_buffer = self.get_FIFO_bytes(FIFO_buffer, FIFO_count)
                 '''
                 DEBUG_PRINTLN(F("Setting motion detection threshold to 2..."));
                 setMotionDetectionThreshold(2);
                 '''
-                # TODO
+                self.set_motion_detection_threshold(2)
                 '''
                 DEBUG_PRINTLN(F("Setting zero-motion detection threshold to 156..."));
                 setZeroMotionDetectionThreshold(156);
                 '''
-                # TODO
+                self.set_zero_motion_detection_threshold(156)
                 '''
                 DEBUG_PRINTLN(F("Setting motion detection duration to 80..."));
                 setMotionDetectionDuration(80);
                 '''
-                # TODO
+                self.set_motion_detection_duration(80)
                 '''
                 DEBUG_PRINTLN(F("Setting zero-motion detection duration to 0..."));
                 setZeroMotionDetectionDuration(0);
                 '''
-                # TODO
+                self.set_zero_motion_detection_duration(0)
                 '''
                 DEBUG_PRINTLN(F("Resetting FIFO..."));
                 resetFIFO();
                 '''
-                # TODO
+                self.reset_FIFO()
                 '''
                 DEBUG_PRINTLN(F("Enabling FIFO..."));
                 setFIFOEnabled(true);
                 '''
-                # TODO
+                self.set_FIFO_enabled(True)
                 '''
                 DEBUG_PRINTLN(F("Enabling DMP..."));
                 setDMPEnabled(true);
                 '''
-                # TODO
+                self.set_DMP_enabled(True)
                 '''
                 DEBUG_PRINTLN(F("Resetting DMP..."));
                 resetDMP();
                 '''
-                # TODO
+                self.reset_DMP()
                 '''
                 DEBUG_PRINTLN(F("Writing final memory update 3/7 (function unknown)..."));
-                for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
+                for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++)
+                {
+                    dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
+                }
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
-                # TODO
+                j = 0
+                while (j < 4) or (j < dmp_update[2]+3):
+                    dmp_update[j] = C.dmpUpdates[pos]
+                    pos += 1
+                    j +=1
+                # Write as block from pos 3
+                self.write_memory_block(dmp_update[3:], dmp_update[2],
+                                        dmp_update[0], dmp_update[1])
                 '''
                 DEBUG_PRINTLN(F("Writing final memory update 4/7 (function unknown)..."));
                 for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
-                # TODO
+                j = 0
+                while (j < 4) or (j < dmp_update[2]+3):
+                    dmp_update[j] = C.dmpUpdates[pos]
+                    pos += 1
+                    j +=1
+                # Write as block from pos 3
+                self.write_memory_block(dmp_update[3:], dmp_update[2],
+                                        dmp_update[0], dmp_update[1])
                 '''
                 DEBUG_PRINTLN(F("Writing final memory update 5/7 (function unknown)..."));
                 for (j = 0; j < 4 || j < dmpUpdate[2] + 3; j++, pos++) dmpUpdate[j] = pgm_read_byte(&dmpUpdates[pos]);
                 writeMemoryBlock(dmpUpdate + 3, dmpUpdate[2], dmpUpdate[0], dmpUpdate[1]);
                 '''
-                # TODO
+                j = 0
+                while (j < 4) or (j < dmp_update[2]+3):
+                    dmp_update[j] = C.dmpUpdates[pos]
+                    pos += 1
+                    j +=1
+                # Write as block from pos 3
+                self.write_memory_block(dmp_update[3:], dmp_update[2],
+                                        dmp_update[0], dmp_update[1])
                 '''
                 DEBUG_PRINTLN(F("Waiting for FIFO count > 2..."));
                 while ((fifoCount = getFIFOCount()) < 3);
                 '''
-                # TODO
+                while True:
+                    FIFO_count = self.get_FIFO_count()
+                    if FIFO_count > 2:
+                        break
                 '''
                 DEBUG_PRINT(F("Current FIFO count="));
                 DEBUG_PRINTLN(fifoCount);
                 DEBUG_PRINTLN(F("Reading FIFO data..."));
                 getFIFOBytes(fifoBuffer, fifoCount);
                 '''
-                # TODO
+                FIFO_buffer = self.get_FIFO_bytes(FIFO_buffer, FIFO_count)
                 '''
                 DEBUG_PRINTLN(F("Reading interrupt status..."));
                 uint8_t mpuIntStatus = getIntStatus();

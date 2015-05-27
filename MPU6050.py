@@ -324,7 +324,7 @@ class MPU6050:
 
     def get_FIFO_count(self):
         data = [0]*2
-        data = self.read_bytes(data, C.MPU6050_ra_FIFO_COUNTH, 2)
+        data = self.read_bytes(data, C.MPU6050_RA_FIFO_COUNTH, 2)
         return (data[0] << 8) | data[1]
 
     def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):

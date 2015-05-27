@@ -278,7 +278,7 @@ class MPU6050:
         return True
 
     def write_prog_dmp_configuration(self, a_data_list, a_data_size):
-        return self.writeDMPConfigurationSet(a_data_list, a_data_size)
+        return self.write_DMP_configuration_set(a_data_list, a_data_size)
 
     def set_int_enable(self, a_enabled):
         self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, a_enabled)

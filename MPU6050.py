@@ -117,7 +117,7 @@ class MPU6050:
         self.__mpu.write8(a_reg_add, c_int8(byte).value)
 
     def read_memory_byte(self):
-        return self.__mpu.readu8(C.MPU6050_RA_MEM_R_W)
+        return self.__mpu.readU8(C.MPU6050_RA_MEM_R_W)
 
     def read_bytes(self, a_data_list, a_address, a_length):
         if a_length > len(a_data_list):

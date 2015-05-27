@@ -288,12 +288,12 @@ class MPU6050:
 
     def set_external_frame_sync(self, a_sync):
         self.write_bits(C.MPU6050_RA_CONFIG,
-                              C.MPU6050_CFG_EXT_SYNC_SET_BIT,
-                              C.MPU6050_CFG_EXT_SYNC_SET_LENGTH, a_sync)
+                        C.MPU6050_CFG_EXT_SYNC_SET_BIT,
+                        C.MPU6050_CFG_EXT_SYNC_SET_LENGTH, a_sync)
 
     def set_DLF_mode(self, a_mode):
-        self.__mpu.write_bits(C.MPU6050_RA_CONFIG, C.MPU6050_CFG_DLPF_CFG_BIT,
-                              C.MPU6050_CFG_DLPF_CFG_LENGTH, a_mode)
+        self.write_bits(C.MPU6050_RA_CONFIG, C.MPU6050_CFG_DLPF_CFG_BIT,
+                        C.MPU6050_CFG_DLPF_CFG_LENGTH, a_mode)
 
     def get_DMP_config_1(self):
         return self.__mpu.readU8(C.MPU6050_RA_DMP_CFG_1)

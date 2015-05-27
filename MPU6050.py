@@ -185,7 +185,8 @@ class MPU6050:
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1,
                        C.MPU6050_PWR1_SLEEP_BIT, set_bit)
 
-    def set_memory_bank(self, a_bank, a_prefetch_enabled, a_user_bank):
+    def set_memory_bank(self, a_bank, a_prefetch_enabled=False,
+                        a_user_bank=False):
         a_bank = a_bank & 0x1F
         if a_user_bank:
             a_bank = a_bank | 0x20
@@ -276,7 +277,7 @@ class MPU6050:
                 pass
         return True
 
-    def write_prog_dmp_configuration_set(self, a_data_list, a_data_size):
+    def write_prog_dmp_configuration(self, a_data_list, a_data_size):
         return self.writeDMPConfigurationSet(a_data_list, a_data_size)
 
     def set_int_enable(self, a_enabled):
@@ -388,7 +389,7 @@ class MPU6050:
 
         if self.__debug:
             print('Resetting memory bank selection to 0')
-        self.set_memory_bank(0, False, False)
+        self.set_memory_bank(0)
 
         # check OTP bank valid
         # TODO Find out what OTP is
@@ -439,8 +440,8 @@ class MPU6050:
             if self.__debug:
                 print('Writing DMP configuration to MPU memory banks ' +
                       repr(C.MPU6050_DMP_CONFIG_SIZE) + ' bytes in config')
-            if self.write_prog_dmp_configuration_set(C.dmpConfig,
-                                                     C.MPU6050_DMP_CONFIG_SIZE):
+            if self.write_prog_dmp_configuration(C.dmpConfig,
+                                                 C.MPU6050_DMP_CONFIG_SIZE):
                 if self.__debug:
                     print('Success! DMP configuration written and verified.')
                     print('Setting clock source to Z gyro')

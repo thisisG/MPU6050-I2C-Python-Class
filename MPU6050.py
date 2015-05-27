@@ -284,7 +284,7 @@ class MPU6050:
         self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, a_enabled)
 
     def set_rate(self, a_rate):
-        self.__mpu.write8(C.SMPLRT_DIV, a_rate)
+        self.__mpu.write8(C.MPU6050_RA_SMPLRT_DIV, a_rate)
 
     def set_external_frame_sync(self, a_sync):
         self.__mpu.write_bits(C.MPU6050_RA_CONFIG,

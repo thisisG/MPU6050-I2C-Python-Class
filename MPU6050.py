@@ -646,7 +646,7 @@ class MPU6050:
                     j += 1
                 # Write as block from pos 3
                 self.write_memory_block(dmp_update[3:], dmp_update[2],
-                                        dmp_update[0], dmp_update[1])
+                                        dmp_update[0], dmp_update[1], True)
 
                 if self.__debug:
                     print('DMP is good to go! Finally.')

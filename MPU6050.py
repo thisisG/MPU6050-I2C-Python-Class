@@ -203,7 +203,7 @@ class MPU6050:
                               C.MPU6050_TC_OFFSET_LENGTH)
 
     def set_x_gyro_offset_TC(self, a_offset):
-        self.__mpu.write_bits(C.MPU6050_RA_XG_OFFS_TC,
+        self.write_bits(C.MPU6050_RA_XG_OFFS_TC,
                               C.MPU6050_TC_OFFSET_BIT,
                               C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
@@ -213,7 +213,7 @@ class MPU6050:
                               C.MPU6050_TC_OFFSET_LENGTH)
 
     def set_y_gyro_offset_TC(self, a_offset):
-        self.__mpu.write_bits(C.MPU6050_RA_YG_OFFS_TC,
+        self.write_bits(C.MPU6050_RA_YG_OFFS_TC,
                               C.MPU6050_TC_OFFSET_BIT,
                               C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
@@ -223,7 +223,7 @@ class MPU6050:
                               C.MPU6050_TC_OFFSET_LENGTH)
 
     def set_z_gyro_offset_TC(self, a_offset):
-        self.__mpu.write_bits(C.MPU6050_RA_ZG_OFFS_TC,
+        self.write_bits(C.MPU6050_RA_ZG_OFFS_TC,
                               C.MPU6050_TC_OFFSET_BIT,
                               C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 

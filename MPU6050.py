@@ -1,5 +1,3 @@
-from numpy.f2py.auxfuncs import throw_error
-
 __author__ = 'Geir Istad'
 """
 MPU6050 Python I2C Class

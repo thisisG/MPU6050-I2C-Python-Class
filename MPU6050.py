@@ -422,7 +422,7 @@ class MPU6050:
         self.set_slave_address(0, 0x68)
         if self.__debug:
             print('Resetting I2C Master control')
-        self.resetI2CMaster()
+        self.reset_I2C_master()
         # Wait a bit for the device to register the changes
         sleep(20/1000)
 

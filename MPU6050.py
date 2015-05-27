@@ -233,12 +233,12 @@ class MPU6050:
         bit = 0
         if a_enabled:
             bit = 1
-        self.__mpu.write8(C.MPU6050_RA_USER_CTRL,
-                          C.MPU6050_USERCTRL_I2C_MST_EN_BIT, bit)
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_I2C_MST_EN_BIT, bit)
 
     def reset_I2C_master(self):
-        self.__mpu.write8(C.MPU6050_RA_USER_CTRL,
-                          C.MPU6050_USERCTRL_I2C_MST_RESET_BIT, 1)
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_I2C_MST_RESET_BIT, 1)
 
     def write_prog_memory_block(self, a_data_list, a_data_size, a_bank=0,
                                 a_address=0, a_verify=True):

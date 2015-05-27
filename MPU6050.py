@@ -204,8 +204,8 @@ class MPU6050:
 
     def set_x_gyro_offset_TC(self, a_offset):
         self.write_bits(C.MPU6050_RA_XG_OFFS_TC,
-                              C.MPU6050_TC_OFFSET_BIT,
-                              C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+                        C.MPU6050_TC_OFFSET_BIT,
+                        C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
     def get_y_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_YG_OFFS_TC,
@@ -214,8 +214,8 @@ class MPU6050:
 
     def set_y_gyro_offset_TC(self, a_offset):
         self.write_bits(C.MPU6050_RA_YG_OFFS_TC,
-                              C.MPU6050_TC_OFFSET_BIT,
-                              C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+                        C.MPU6050_TC_OFFSET_BIT,
+                        C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
     def get_z_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_ZG_OFFS_TC,
@@ -224,8 +224,8 @@ class MPU6050:
 
     def set_z_gyro_offset_TC(self, a_offset):
         self.write_bits(C.MPU6050_RA_ZG_OFFS_TC,
-                              C.MPU6050_TC_OFFSET_BIT,
-                              C.MPU6050_TC_OFFSET_LENGTH, a_offset)
+                        C.MPU6050_TC_OFFSET_BIT,
+                        C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
     def set_slave_address(self, a_num, a_address):
         self.__mpu.write8(C.MPU6050_RA_I2C_SLV0_ADDR + a_num*3, a_address)

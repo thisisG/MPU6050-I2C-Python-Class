@@ -47,7 +47,7 @@ while count < 100:
     #print(mpu.get_rotation())
     if FIFO_count == 1024:
         mpu.reset_FIFO()
-    overflow += 1
-    print('count: ' + str(count) + ' overflow: ' + str(overflow))
+        overflow += 1
+        print('count: ' + str(count) + ' overflow: ' + str(overflow))
 print('overflows: ' + str(overflow))
 print(FIFO_list)

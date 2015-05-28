@@ -23,8 +23,10 @@ print(FIFO_count)
 count = 0
 FIFO_buffer = [0]*64
 overflow = 0
-while count < 1000:
+FIFO_list = list()
+while count < 100:
     FIFO_count = mpu.get_FIFO_count()
+    FIFO_list.append(FIFO_count)
     mpu_int_status = mpu.get_int_status()
     #print('Fifo_count start loop: ' + str(FIFO_count))
     #print('int status: ' + hex(mpu_int_status))
@@ -45,6 +47,7 @@ while count < 1000:
     #print(mpu.get_rotation())
     if FIFO_count == 1024:
         mpu.reset_FIFO()
-	overflow += 1
-        print('count: ' + str(count) + ' overflow: ' + str(overflow))
+    overflow += 1
+    print('count: ' + str(count) + ' overflow: ' + str(overflow))
 print('overflows: ' + str(overflow))
+print(FIFO_list)

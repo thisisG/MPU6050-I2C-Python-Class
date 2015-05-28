@@ -125,8 +125,10 @@ class MPU6050:
         if a_length > len(a_data_list):
             print('read_bytes, length of passed list too short')
             return a_data_list
-        for x in xrange(0, a_length):
-            a_data_list[x] = self.__mpu.readU8(a_address + x)
+        # Attempt to use the built in read bytes function in the adafruit lib
+        a_data_list = self.__mpu.readList(a_address, a_length)
+        #for x in xrange(0, a_length):
+        #    a_data_list[x] = self.__mpu.readU8(a_address + x)
         return a_data_list
 
     def write_memory_block(self, a_data_list, a_data_size, a_bank, a_address,

@@ -50,12 +50,14 @@ from Adafruit_I2C import Adafruit_I2C
 from MPUConstants import MPUConstants as C
 from ctypes import c_int16, c_int8
 from time import sleep
+from Quaternion import Quaternion as Q, XYZVector as V
 
 
 class MPU6050:
     __mpu = Adafruit_I2C
     __buffer = [0] * 14
     __debug = False
+    __DMP_packet_size = 0
 
     def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=None,
                  a_yAOff=None, a_zAOff=None, a_xGOff=None, a_yGOff=None,
@@ -92,26 +94,26 @@ class MPU6050:
     def write_bit(self, a_reg_add, a_bit_num, a_bit):
         byte = self.__mpu.readU8(a_reg_add)
         if a_bit:
-            byte = byte | (1 << a_bit_num)
+            byte |= 1 << a_bit_num
         else:
-            byte = byte & ~(1 << a_bit_num)
+            byte &= ~(1 << a_bit_num)
         self.__mpu.write8(a_reg_add, c_int8(byte).value)
 
     def read_bits(self, a_reg_add, a_bit_start, a_length):
         byte = self.__mpu.readU8(a_reg_add)
         mask = ((1 << a_length) - 1) << (a_bit_start - a_length + 1)
-        byte = byte & mask
-        byte = byte >> (a_bit_start - a_length + 1)
+        byte &= mask
+        byte >>= a_bit_start - a_length + 1
         return byte
 
     def write_bits(self, a_reg_add, a_bit_start, a_length, a_data):
         byte = self.__mpu.readU8(a_reg_add)
         mask = ((1 << a_length) - 1) << (a_bit_start - a_length + 1)
         # Get data in position and zero all non-important bits in data
-        a_data = a_data << (a_bit_start - a_length + 1)
-        a_data = a_data & mask
+        a_data <<= a_bit_start - a_length + 1
+        a_data &= mask
         # Clear all important bits in read byte and combine with data
-        byte = byte & (~mask)
+        byte &= ~mask
         byte = byte | a_data
         # Write the data to the I2C device
         self.__mpu.write8(a_reg_add, c_int8(byte).value)
@@ -187,11 +189,11 @@ class MPU6050:
 
     def set_memory_bank(self, a_bank, a_prefetch_enabled=False,
                         a_user_bank=False):
-        a_bank = a_bank & 0x1F
+        a_bank &= 0x1F
         if a_user_bank:
-            a_bank = a_bank | 0x20
+            a_bank |= 0x20
         if a_prefetch_enabled:
-            a_bank = a_bank | 0x20
+            a_bank |= 0x20
         self.__mpu.write8(C.MPU6050_RA_BANK_SEL, a_bank)
 
     def set_memory_start_address(self, a_address):
@@ -228,7 +230,7 @@ class MPU6050:
                         C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
     def set_slave_address(self, a_num, a_address):
-        self.__mpu.write8(C.MPU6050_RA_I2C_SLV0_ADDR + a_num*3, a_address)
+        self.__mpu.write8(C.MPU6050_RA_I2C_SLV0_ADDR + a_num * 3, a_address)
 
     def set_I2C_master_mode_enabled(self, a_enabled):
         bit = 0
@@ -250,8 +252,8 @@ class MPU6050:
         index = 0
         while index < a_data_size:
             bank = a_data_list[index]
-            offset = a_data_list[index+1]
-            length = a_data_list[index+2]
+            offset = a_data_list[index + 1]
+            length = a_data_list[index + 2]
             index += 3
             success = False
 
@@ -318,19 +320,6 @@ class MPU6050:
         return self.read_bit(C.MPU6050_RA_XG_OFFS_TC,
                              C.MPU6050_TC_OTP_BNK_VLD_BIT)
 
-    def reset_FIFO(self):
-        self.write_bit(C.MPU6050_RA_USER_CTRL,
-                       C.MPU6050_USERCTRL_FIFO_RESET_BIT, True)
-
-    def get_FIFO_count(self):
-        data = [0]*2
-        data = self.read_bytes(data, C.MPU6050_RA_FIFO_COUNTH, 2)
-        return (data[0] << 8) | data[1]
-
-    def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
-        return self.read_bytes(a_FIFO_buffer, C.MPU6050_RA_FIFO_R_W,
-                               a_FIFO_count)
-
     def set_motion_detection_threshold(self, a_threshold):
         self.__mpu.write8(C.MPU6050_RA_MOT_THR, a_threshold)
 
@@ -361,14 +350,11 @@ class MPU6050:
         self.write_bit(C.MPU6050_RA_USER_CTRL,
                        C.MPU6050_USERCTRL_DMP_RESET_BIT, True)
 
-    def get_int_status(self):
-        return self.__mpu.readU8(C.MPU6050_RA_INT_STATUS)
-
     def dmp_initialize(self):
         # Reset the MPU
         self.reset()
         # Sleep a bit while resetting
-        sleep(50/1000)
+        sleep(50 / 1000)
         # Disable sleep mode
         self.set_sleep_enabled(0)
 
@@ -425,7 +411,7 @@ class MPU6050:
             print('Resetting I2C Master control')
         self.reset_I2C_master()
         # Wait a bit for the device to register the changes
-        sleep(20/1000)
+        sleep(20 / 1000)
 
         # load DMP code into memory banks
         if self.__debug:
@@ -493,8 +479,8 @@ class MPU6050:
                     print('Writing final memory update 1/7 (function unknown)')
                 pos = 0
                 j = 0
-                dmp_update = [0]*16
-                while (j < 4) or (j < dmp_update[2]+3):
+                dmp_update = [0] * 16
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -505,7 +491,7 @@ class MPU6050:
                 if self.__debug:
                     print('Writing final memory update 2/7 (function unknown)')
                 j = 0
-                while (j < 4) or (j < dmp_update[2]+3):
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -526,7 +512,7 @@ class MPU6050:
 
                 if self.__debug:
                     print('Getting FIFO buffer')
-                FIFO_buffer = [0]*128
+                FIFO_buffer = [0] * 128
                 FIFO_buffer = self.get_FIFO_bytes(FIFO_buffer, FIFO_count)
 
                 if self.__debug:
@@ -564,7 +550,7 @@ class MPU6050:
                 if self.__debug:
                     print('Writing final memory update 3/7 (function unknown)')
                 j = 0
-                while (j < 4) or (j < dmp_update[2]+3):
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -575,7 +561,7 @@ class MPU6050:
                 if self.__debug:
                     print('Writing final memory update 4/7 (function unknown)')
                 j = 0
-                while (j < 4) or (j < dmp_update[2]+3):
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -586,7 +572,7 @@ class MPU6050:
                 if self.__debug:
                     print('Writing final memory update 5/7 (function unknown)')
                 j = 0
-                while (j < 4) or (j < dmp_update[2]+3):
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -613,7 +599,7 @@ class MPU6050:
                     print('Current interrupt status = ' + hex(MPU_int_status))
                     print('Writing final memory update 6/7 (function unknown)')
                 j = 0
-                while (j < 4) or (j < dmp_update[2]+3):
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -640,7 +626,7 @@ class MPU6050:
                     print('Current interrupt status = ' + hex(MPU_int_status))
                     print('Writing final memory update 7/7 (function unknown)')
                 j = 0
-                while (j < 4) or (j < dmp_update[2]+3):
+                while (j < 4) or (j < dmp_update[2] + 3):
                     dmp_update[j] = C.dmpUpdates[pos]
                     pos += 1
                     j += 1
@@ -652,6 +638,10 @@ class MPU6050:
                     print('DMP is good to go! Finally.')
                     print('Disabling DMP (you turn it on later)')
                 self.set_DMP_enabled(False)
+
+                if self.__debug:
+                    print('Setting up internal 42 byte DMP packet buffer')
+                self.__DMP_packet_size = 42
 
                 if self.__debug:
                     print(
@@ -669,23 +659,6 @@ class MPU6050:
 
         # success
         return 0
-
-    # Main interfacing functions to get raw data from MPU
-    def get_acceleration(self):
-        raw_data = self.__mpu.readList(C.MPU6050_RA_ACCEL_XOUT_H, 6)
-        accel = [0]*3
-        accel[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
-        accel[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
-        accel[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
-        return accel
-
-    def get_rotation(self):
-        raw_data = self.__mpu.readList(C.MPU6050_RA_GYRO_XOUT_H, 6)
-        gyro = [0]*3
-        gyro[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
-        gyro[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
-        gyro[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
-        return gyro
 
     # Acceleration and gyro offset setters and getters
     def set_x_accel_offset(self, a_offset):
@@ -717,3 +690,87 @@ class MPU6050:
         self.__mpu.write8(C.MPU6050_RA_ZG_OFFS_USRH,
                           c_int8(a_offset >> 8).value)
         self.__mpu.write8(C.MPU6050_RA_ZG_OFFS_USRL, c_int8(a_offset).value)
+
+    # Main interfacing functions to get raw data from MPU
+    def get_acceleration(self):
+        raw_data = self.__mpu.readList(C.MPU6050_RA_ACCEL_XOUT_H, 6)
+        accel = [0] * 3
+        accel[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
+        accel[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
+        accel[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
+        return accel
+
+    def get_rotation(self):
+        raw_data = self.__mpu.readList(C.MPU6050_RA_GYRO_XOUT_H, 6)
+        gyro = [0] * 3
+        gyro[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
+        gyro[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
+        gyro[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
+        return gyro
+
+    # Interfacing functions to get data from FIFO buffer
+    def DMP_get_FIFO_packet_size(self):
+        return self.__DMP_packet_size
+
+    def reset_FIFO(self):
+        self.write_bit(C.MPU6050_RA_USER_CTRL,
+                       C.MPU6050_USERCTRL_FIFO_RESET_BIT, True)
+
+    def get_FIFO_count(self):
+        data = [0] * 2
+        data = self.read_bytes(data, C.MPU6050_RA_FIFO_COUNTH, 2)
+        return (data[0] << 8) | data[1]
+
+    def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
+        return self.read_bytes(a_FIFO_buffer, C.MPU6050_RA_FIFO_R_W,
+                               a_FIFO_count)
+
+    def get_int_status(self):
+        return self.__mpu.readU8(C.MPU6050_RA_INT_STATUS)
+
+    # Data retrieval from received FIFO buffer
+
+    def DMP_get_quaternion_int16(self, a_FIFO_buffer):
+        w = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
+        x = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
+        y = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
+        z = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
+        return Q(w, x, y, z)
+
+    def DMP_get_quaternion(self, a_FIFO_buffer):
+        quat = self.DMP_get_quaternion_int16(a_FIFO_buffer)
+        result = Q(quat.w / 16384.0, quat.x / 16384.0,
+                   quat.y / 16384.0, quat.z / 16384.0)
+        return result
+
+    def DMP_get_acceleration_int16(self, a_FIFO_buffer):
+        accel = V()
+        accel.x = c_int16(a_FIFO_buffer[28] << 8 | a_FIFO_buffer[29]).value
+        accel.y = c_int16(a_FIFO_buffer[32] << 8 | a_FIFO_buffer[33]).value
+        accel.z = c_int16(a_FIFO_buffer[36] << 8 | a_FIFO_buffer[37]).value
+        return accel
+
+    def DMP_get_gravity(self, a_quat):
+        gravity = V()
+        gravity.x = 2.0 * (a_quat.x * a_quat.z - a_quat.w * a_quat.y)
+        gravity.y = 2.0 * (a_quat.w * a_quat.x + a_quat.y * a_quat.z)
+        gravity.z = 1.0 * (a_quat.w * a_quat.w - a_quat.x * a_quat.x -
+                           a_quat.y * a_quat.y + a_quat.z * a_quat.z)
+        return gravity
+
+    def DMP_get_linear_accel_int16(self, a_v_raw, a_grav):
+        linear_accel = V()
+        linear_accel.x = c_int16(a_v_raw.x - (a_grav.x*8192)).value
+        linear_accel.y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
+        linear_accel.y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
+        return linear_accel
+
+"""
+Quaternion q;           // [w, x, y, z]         quaternion container
+VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
+VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
+VectorFloat gravity;    // [x, y, z]            gravity vector
+float euler[3];         // [psi, theta, phi]    Euler angle container
+float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
+"""

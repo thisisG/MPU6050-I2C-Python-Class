@@ -33,14 +33,14 @@ while count < 1000:
         #print('fifo count: ' + str(FIFO_count))
     FIFO_buffer = mpu.get_FIFO_bytes(FIFO_buffer,packet_size)
     #print(FIFO_buffer)
-    quat = mpu.DMP_get_quaternion(FIFO_buffer)
-    accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)
+    #quat = mpu.DMP_get_quaternion(FIFO_buffer)
+    #accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)
     #grav = mpu.DMP_get_gravity(quat)
     #lin_accel = mpu.DMP_get_linear_accel_int16(accel, grav)
     #print(accel.x)
     #print(accel.y)
     #print(accel.z)
-    count += 1 
+    count += 1
     #print(mpu.get_acceleration())
     #print(mpu.get_rotation())
     if FIFO_count == 1024:

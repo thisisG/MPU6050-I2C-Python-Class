@@ -46,7 +46,8 @@ THE SOFTWARE.
 ===============================================
 """
 
-from Adafruit_I2C import Adafruit_I2C
+#from Adafruit_I2C import Adafruit_I2C
+import smbus
 from MPUConstants import MPUConstants as C
 from ctypes import c_int16, c_int8
 from time import sleep
@@ -58,12 +59,15 @@ class MPU6050:
     __buffer = [0] * 14
     __debug = False
     __DMP_packet_size = 0
+    __dev_id = 0
+    __bus = None
 
     def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=None,
                  a_yAOff=None, a_zAOff=None, a_xGOff=None, a_yGOff=None,
                  a_zGOff=None, a_debug=False):
-        # Connect to the I2C bus with default address of device as 0x68
-        self.__mpu = Adafruit_I2C(a_address)
+        self.__dev_id = a_address
+        # Connect to num 1 SMBus
+        self.__bus = smbus.SMBus(1)
         # Set clock source to gyro
         self.set_clock_source(C.MPU6050_CLOCK_PLL_XGYRO)
         # Set accelerometer range
@@ -92,22 +96,23 @@ class MPU6050:
         return self.read_bits(a_reg_add, a_bit_position, 1)
 
     def write_bit(self, a_reg_add, a_bit_num, a_bit):
-        byte = self.__mpu.readU8(a_reg_add)
+        byte = self.__bus.read_byte_data(self.__dev_id, a_reg_add)
         if a_bit:
             byte |= 1 << a_bit_num
         else:
             byte &= ~(1 << a_bit_num)
-        self.__mpu.write8(a_reg_add, c_int8(byte).value)
+        self.__bus.write_byte_data(
+            self.__dev_id, a_reg_add, c_int8(byte).value)
 
     def read_bits(self, a_reg_add, a_bit_start, a_length):
-        byte = self.__mpu.readU8(a_reg_add)
+        byte = self.__bus.read_byte_data(self.__dev_id, a_reg_add)
         mask = ((1 << a_length) - 1) << (a_bit_start - a_length + 1)
         byte &= mask
         byte >>= a_bit_start - a_length + 1
         return byte
 
     def write_bits(self, a_reg_add, a_bit_start, a_length, a_data):
-        byte = self.__mpu.readU8(a_reg_add)
+        byte = self.__bus.read_byte_data(self.__dev_id, a_reg_add)
         mask = ((1 << a_length) - 1) << (a_bit_start - a_length + 1)
         # Get data in position and zero all non-important bits in data
         a_data <<= a_bit_start - a_length + 1
@@ -116,22 +121,25 @@ class MPU6050:
         byte &= ~mask
         byte = byte | a_data
         # Write the data to the I2C device
-        self.__mpu.write8(a_reg_add, c_int8(byte).value)
+        self.__bus.write_byte_data(
+            self.__dev_id, a_reg_add, c_int8(byte).value)
 
     def read_memory_byte(self):
-        return self.__mpu.readU8(C.MPU6050_RA_MEM_R_W)
+        return self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_MEM_R_W)
 
     def read_bytes(self, a_data_list, a_address, a_length):
         if a_length > len(a_data_list):
             print('read_bytes, length of passed list too short')
             return a_data_list
         # Attempt to use the built in read bytes function in the adafruit lib
-        #a_data_list = self.__mpu.readList(a_address, a_length)
+        a_data_list = self.__bus.read_i2c_block_data(self.__dev_id, a_address,
+                                                     a_length)
         # Attempt to bypass adafruit lib
         #a_data_list = self.__mpu.bus.read_i2c_block_data(0x68, a_address, a_length)
         #print('data' + str(a_data_list))
-        for x in xrange(0, a_length):
-            a_data_list[x] = self.__mpu.readU8(a_address + x)
+        # for x in xrange(0, a_length):
+        #    a_data_list[x] = self.__bus.read_byte_data(
+        #        self.__dev_id, a_address + x)
         return a_data_list
 
     def write_memory_block(self, a_data_list, a_data_size, a_bank, a_address,
@@ -143,7 +151,8 @@ class MPU6050:
         # memory bank and address
         for i in range(0, a_data_size):
             # Write each data to memory
-            self.__mpu.write8(C.MPU6050_RA_MEM_R_W, a_data_list[i])
+            self.__bus.write_byte_data(
+                self.__dev_id, C.MPU6050_RA_MEM_R_W, a_data_list[i])
 
             if a_verify:
                 # TODO implement verification
@@ -199,10 +208,12 @@ class MPU6050:
             a_bank |= 0x20
         if a_prefetch_enabled:
             a_bank |= 0x20
-        self.__mpu.write8(C.MPU6050_RA_BANK_SEL, a_bank)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_BANK_SEL, a_bank)
 
     def set_memory_start_address(self, a_address):
-        self.__mpu.write8(C.MPU6050_RA_MEM_START_ADDR, a_address)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_MEM_START_ADDR, a_address)
 
     def get_x_gyro_offset_TC(self):
         return self.read_bits(C.MPU6050_RA_XG_OFFS_TC,
@@ -235,7 +246,8 @@ class MPU6050:
                         C.MPU6050_TC_OFFSET_LENGTH, a_offset)
 
     def set_slave_address(self, a_num, a_address):
-        self.__mpu.write8(C.MPU6050_RA_I2C_SLV0_ADDR + a_num * 3, a_address)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_I2C_SLV0_ADDR + a_num * 3, a_address)
 
     def set_I2C_master_mode_enabled(self, a_enabled):
         bit = 0
@@ -276,7 +288,8 @@ class MPU6050:
                 index += 1
                 if special == 0x01:
                     # TODO Figure out if write8 can return True/False
-                    success = self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, 0x32)
+                    success = self.__bus.write_byte_data(
+                        self.__dev_id, C.MPU6050_RA_INT_ENABLE, 0x32)
 
             if success == False:
                 # TODO implement error messagemajigger
@@ -288,10 +301,12 @@ class MPU6050:
         return self.write_DMP_configuration_set(a_data_list, a_data_size)
 
     def set_int_enable(self, a_enabled):
-        self.__mpu.write8(C.MPU6050_RA_INT_ENABLE, a_enabled)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_INT_ENABLE, a_enabled)
 
     def set_rate(self, a_rate):
-        self.__mpu.write8(C.MPU6050_RA_SMPLRT_DIV, a_rate)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_SMPLRT_DIV, a_rate)
 
     def set_external_frame_sync(self, a_sync):
         self.write_bits(C.MPU6050_RA_CONFIG,
@@ -303,16 +318,18 @@ class MPU6050:
                         C.MPU6050_CFG_DLPF_CFG_LENGTH, a_mode)
 
     def get_DMP_config_1(self):
-        return self.__mpu.readU8(C.MPU6050_RA_DMP_CFG_1)
+        return self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_DMP_CFG_1)
 
     def set_DMP_config_1(self, a_config):
-        self.__mpu.write8(C.MPU6050_RA_DMP_CFG_1, a_config)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_DMP_CFG_1, a_config)
 
     def get_DMP_config_2(self):
-        return self.__mpu.readU8(C.MPU6050_RA_DMP_CFG_2)
+        return self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_DMP_CFG_2)
 
     def set_DMP_config_2(self, a_config):
-        self.__mpu.write8(C.MPU6050_RA_DMP_CFG_2, a_config)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_DMP_CFG_2, a_config)
 
     def set_OTP_bank_valid(self, a_enabled):
         bit = 0
@@ -326,16 +343,20 @@ class MPU6050:
                              C.MPU6050_TC_OTP_BNK_VLD_BIT)
 
     def set_motion_detection_threshold(self, a_threshold):
-        self.__mpu.write8(C.MPU6050_RA_MOT_THR, a_threshold)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_MOT_THR, a_threshold)
 
     def set_zero_motion_detection_threshold(self, a_threshold):
-        self.__mpu.write8(C.MPU6050_RA_ZRMOT_THR, a_threshold)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_ZRMOT_THR, a_threshold)
 
     def set_motion_detection_duration(self, a_duration):
-        self.__mpu.write8(C.MPU6050_RA_MOT_DUR, a_duration)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_MOT_DUR, a_duration)
 
     def set_zero_motion_detection_duration(self, a_duration):
-        self.__mpu.write8(C.MPU6050_RA_ZRMOT_DUR, a_duration)
+        self.__bus.write_byte_data(
+            self.__dev_id, C.MPU6050_RA_ZRMOT_DUR, a_duration)
 
     def set_FIFO_enabled(self, a_enabled):
         bit = 0
@@ -667,38 +688,45 @@ class MPU6050:
 
     # Acceleration and gyro offset setters and getters
     def set_x_accel_offset(self, a_offset):
-        self.__mpu.write8(C.MPU6050_RA_XA_OFFS_H,
-                          c_int8(a_offset >> 8).value)
-        self.__mpu.write8(C.MPU6050_RA_XA_OFFS_L_TC, c_int8(a_offset).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XA_OFFS_H,
+                                   c_int8(a_offset >> 8).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XA_OFFS_L_TC,
+                                   c_int8(a_offset).value)
 
     def set_y_accel_offset(self, a_offset):
-        self.__mpu.write8(C.MPU6050_RA_YA_OFFS_H,
-                          c_int8(a_offset >> 8).value)
-        self.__mpu.write8(C.MPU6050_RA_YA_OFFS_L_TC, c_int8(a_offset).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YA_OFFS_H,
+                                   c_int8(a_offset >> 8).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YA_OFFS_L_TC,
+                                   c_int8(a_offset).value)
 
     def set_z_accel_offset(self, a_offset):
-        self.__mpu.write8(C.MPU6050_RA_ZA_OFFS_H,
-                          c_int8(a_offset >> 8).value)
-        self.__mpu.write8(C.MPU6050_RA_ZA_OFFS_L_TC, c_int8(a_offset).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZA_OFFS_H,
+                                   c_int8(a_offset >> 8).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZA_OFFS_L_TC,
+                                   c_int8(a_offset).value)
 
     def set_x_gyro_offset(self, a_offset):
-        self.__mpu.write8(C.MPU6050_RA_XG_OFFS_USRH,
-                          c_int8(a_offset >> 8).value)
-        self.__mpu.write8(C.MPU6050_RA_XG_OFFS_USRL, c_int8(a_offset).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XG_OFFS_USRH,
+                                   c_int8(a_offset >> 8).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XG_OFFS_USRL,
+                                   c_int8(a_offset).value)
 
     def set_y_gyro_offset(self, a_offset):
-        self.__mpu.write8(C.MPU6050_RA_YG_OFFS_USRH,
-                          c_int8(a_offset >> 8).value)
-        self.__mpu.write8(C.MPU6050_RA_YG_OFFS_USRL, c_int8(a_offset).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YG_OFFS_USRH,
+                                   c_int8(a_offset >> 8).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YG_OFFS_USRL,
+                                   c_int8(a_offset).value)
 
     def set_z_gyro_offset(self, a_offset):
-        self.__mpu.write8(C.MPU6050_RA_ZG_OFFS_USRH,
-                          c_int8(a_offset >> 8).value)
-        self.__mpu.write8(C.MPU6050_RA_ZG_OFFS_USRL, c_int8(a_offset).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZG_OFFS_USRH,
+                                   c_int8(a_offset >> 8).value)
+        self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZG_OFFS_USRL,
+                                   c_int8(a_offset).value)
 
     # Main interfacing functions to get raw data from MPU
     def get_acceleration(self):
-        raw_data = self.__mpu.readList(C.MPU6050_RA_ACCEL_XOUT_H, 6)
+        raw_data = self.__bus.read_i2c_block_data(self.__dev_id,
+                                                  C.MPU6050_RA_ACCEL_XOUT_H, 6)
         accel = [0] * 3
         accel[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
         accel[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
@@ -706,7 +734,8 @@ class MPU6050:
         return accel
 
     def get_rotation(self):
-        raw_data = self.__mpu.readList(C.MPU6050_RA_GYRO_XOUT_H, 6)
+        raw_data = self.__bus.read_i2c_block_data(self.__dev_id,
+                                                  C.MPU6050_RA_GYRO_XOUT_H, 6)
         gyro = [0] * 3
         gyro[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
         gyro[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
@@ -731,7 +760,8 @@ class MPU6050:
                                a_FIFO_count)
 
     def get_int_status(self):
-        return self.__mpu.readU8(C.MPU6050_RA_INT_STATUS)
+        return self.__bus.read_byte_data(self.__dev_id,
+                                         C.MPU6050_RA_INT_STATUS)
 
     # Data retrieval from received FIFO buffer
 

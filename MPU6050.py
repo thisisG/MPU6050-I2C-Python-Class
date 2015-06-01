@@ -756,7 +756,6 @@ class MPU6050:
         return (data[0] << 8) | data[1]
 
     def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
-        a_FIFO_buffer = list()
         for index in range(0, a_FIFO_count):
             a_FIFO_buffer[index] = self.__bus.read_byte_data(self.__dev_id,
                                                              C.MPU6050_RA_FIFO_R_W)

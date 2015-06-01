@@ -132,14 +132,14 @@ class MPU6050:
             print('read_bytes, length of passed list too short')
             return a_data_list
         # Attempt to use the built in read bytes function in the adafruit lib
-        a_data_list = self.__bus.read_i2c_block_data(self.__dev_id, a_address,
-                                                     a_length)
+        #a_data_list = self.__bus.read_i2c_block_data(self.__dev_id, a_address,
+        #                                             a_length)
         # Attempt to bypass adafruit lib
         #a_data_list = self.__mpu.bus.read_i2c_block_data(0x68, a_address, a_length)
         #print('data' + str(a_data_list))
-        # for x in xrange(0, a_length):
-        #    a_data_list[x] = self.__bus.read_byte_data(
-        #        self.__dev_id, a_address + x)
+        for x in xrange(0, a_length):
+            a_data_list[x] = self.__bus.read_byte_data(self.__dev_id,
+                                                       a_address + x)
         return a_data_list
 
     def write_memory_block(self, a_data_list, a_data_size, a_bank, a_address,

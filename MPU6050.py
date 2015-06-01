@@ -128,10 +128,10 @@ class MPU6050:
         # Attempt to use the built in read bytes function in the adafruit lib
         #a_data_list = self.__mpu.readList(a_address, a_length)
         # Attempt to bypass adafruit lib
-        a_data_list = self.__mpu.bus.read_i2c_block_data(0x68, a_address, a_length)
-        print('data' + str(a_data_list))
-        # for x in xrange(0, a_length):
-        #    a_data_list[x] = self.__mpu.readU8(a_address + x)
+        #a_data_list = self.__mpu.bus.read_i2c_block_data(0x68, a_address, a_length)
+        #print('data' + str(a_data_list))
+        for x in xrange(0, a_length):
+            a_data_list[x] = self.__mpu.readU8(a_address + x)
         return a_data_list
 
     def write_memory_block(self, a_data_list, a_data_size, a_bank, a_address,

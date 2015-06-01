@@ -24,7 +24,7 @@ overflow = 0
 no_overflow = 0
 start_time = clock()
 #FIFO_list = list()
-while count < 100:
+while count < 1000:
     FIFO_count = mpu.get_FIFO_count()
     #FIFO_list.append(FIFO_count)
     mpu_int_status = mpu.get_int_status()

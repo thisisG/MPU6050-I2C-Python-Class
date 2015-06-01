@@ -127,6 +127,7 @@ class MPU6050:
             return a_data_list
         # Attempt to use the built in read bytes function in the adafruit lib
         a_data_list = self.__mpu.readList(a_address, a_length)
+        print ('data' + str(a_data_list))
         #for x in xrange(0, a_length):
         #    a_data_list[x] = self.__mpu.readU8(a_address + x)
         return a_data_list

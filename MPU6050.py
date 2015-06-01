@@ -55,7 +55,7 @@ from Quaternion import Quaternion as Q, XYZVector as V
 
 
 class MPU6050:
-    __mpu = Adafruit_I2C
+#    __mpu = Adafruit_I2C
     __buffer = [0] * 14
     __debug = False
     __DMP_packet_size = 0

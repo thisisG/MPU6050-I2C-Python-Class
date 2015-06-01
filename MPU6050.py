@@ -55,7 +55,7 @@ from Quaternion import Quaternion as Q, XYZVector as V
 
 
 class MPU6050:
-#    __mpu = Adafruit_I2C
+    #    __mpu = Adafruit_I2C
     __buffer = [0] * 14
     __debug = False
     __DMP_packet_size = 0
@@ -132,7 +132,7 @@ class MPU6050:
             print('read_bytes, length of passed list too short')
             return a_data_list
         # Attempt to use the built in read bytes function in the adafruit lib
-        #a_data_list = self.__bus.read_i2c_block_data(self.__dev_id, a_address,
+        # a_data_list = self.__bus.read_i2c_block_data(self.__dev_id, a_address,
         #                                             a_length)
         # Attempt to bypass adafruit lib
         #a_data_list = self.__mpu.bus.read_i2c_block_data(0x68, a_address, a_length)
@@ -756,8 +756,11 @@ class MPU6050:
         return (data[0] << 8) | data[1]
 
     def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
-        return self.read_bytes(a_FIFO_buffer, C.MPU6050_RA_FIFO_R_W,
-                               a_FIFO_count)
+        for index in range(0, a_FIFO_count)
+            a_FIFO_buffer[index] = self.__bus.read_byte_data(self.__dev_id,
+                                                             C.MPU6050_RA_FIFO_R_W)
+        # return self.read_bytes(a_FIFO_buffer, C.MPU6050_RA_FIFO_R_W,
+        #                       a_FIFO_count)
 
     def get_int_status(self):
         return self.__bus.read_byte_data(self.__dev_id,

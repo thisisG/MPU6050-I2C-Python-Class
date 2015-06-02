@@ -53,7 +53,7 @@ from ctypes import c_int16, c_int8
 from time import sleep
 from Quaternion import Quaternion as Q
 from Quaternion import XYZVector as V
-from math import atan2, atan, sqrt
+from math import atan2, atan, sqrt, pi
 
 
 class MPU6050:
@@ -819,4 +819,11 @@ class MPU6050:
         roll = atan(a_grav_vect.y /
                     sqrt(a_grav_vect.x*a_grav_vect.x +
                          a_grav_vect.z*a_grav_vect.z))
+        return V(yaw, pitch, roll)
+
+    def DMP_get_euler_yaw_pitch_roll(self, a_quat, a_grav_vect):
+        rad_ypr = self.DMP_get_yaw_pitch_roll(a_quat, a_grav_vect)
+        yaw = rad_ypr.x * (180.0/pi)
+        pitch = rad_ypr.x * (180.0/pi)
+        yaw = rad_ypr.x * (180.0/pi)
         return V(yaw, pitch, roll)

@@ -826,5 +826,10 @@ class MPU6050:
         yaw = rad_ypr.x * (180.0/pi)
         pitch = rad_ypr.y * (180.0/pi)
         roll = rad_ypr.z * (180.0/pi)
-
         return V(yaw, pitch, roll)
+
+    def DMP_get_linear_accel(self, a_vector_raw, a_vect_grav):
+        x = a_vector_raw.x - a_vect_grav.x*8192
+        y = a_vector_raw.y - a_vect_grav.y*8192
+        z = a_vector_raw.z - a_vect_grav.z*8192
+        return V(x, y, z)

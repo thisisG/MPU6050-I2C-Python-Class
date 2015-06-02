@@ -53,6 +53,7 @@ from ctypes import c_int16, c_int8
 from time import sleep
 from Quaternion import Quaternion as Q
 from Quaternion import XYZVector as V
+from math import atan2, atan, sqrt
 
 
 class MPU6050:
@@ -797,3 +798,25 @@ class MPU6050:
         y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
         y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
         return V(x, y, z)
+
+    def DMP_get_euler(self, a_quat):
+        psi = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
+                    2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
+        theta = -asin(2*a_quat.x*a_quat.z + 2*a_quat.w*a_quat.y)
+        phi = atan2(2*a_quat.y*a_quat.z - 2*a_quat.w*a_quat.x,
+                    2*a_quat.w*a_quat.w + 2*a_quat.z*a_quat.z - 1)
+        return V(psi, theta, phi)
+
+    def DMP_get_yaw_pitch_roll(self, a_quat, a_grav_vect):
+        # yaw: (about Z axis)
+        yaw = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
+                    2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
+        # pitch: (nose up/down, about Y axis)
+        pitch = atan(a_grav_vect.x /
+                     sqrt(a_grav_vect.y*a_grav_vect.y +
+                          a_grav_vect.z*a_grav_vect.z))
+        # roll: (tilt left/right, about X axis)
+        roll = atan(a_grav_vect.y /
+                    sqrt(a_grav_vect.x*a_grav_vect.x +
+                         a_grav_vect.z*a_grav_vect.z))
+        return V(yaw, pitch, roll)

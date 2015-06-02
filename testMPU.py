@@ -3,7 +3,7 @@ __author__ = 'Geir'
 from MPU6050 import MPU6050
 from time import clock
 
-mpu = mpu = MPU6050(0x68, -5489, -1441, 1305, -2, -72, -5, True)
+mpu = mpu = MPU6050(1, 0x68, -5489, -1441, 1305, -2, -72, -5, True)
 
 mpu.dmp_initialize()
 mpu.set_DMP_enabled(True)

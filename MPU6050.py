@@ -826,4 +826,5 @@ class MPU6050:
         yaw = rad_ypr.x * (180.0/pi)
         pitch = rad_ypr.x * (180.0/pi)
         roll = rad_ypr.x * (180.0/pi)
+
         return V(yaw, pitch, roll)

@@ -51,23 +51,23 @@ import smbus
 from MPUConstants import MPUConstants as C
 from ctypes import c_int16, c_int8
 from time import sleep
-from Quaternion import Quaternion as Q, XYZVector as V
+from Quaternion import Quaternion as Q
+from Quaternion import XYZVector as V
 
 
 class MPU6050:
-    #    __mpu = Adafruit_I2C
     __buffer = [0] * 14
     __debug = False
     __DMP_packet_size = 0
     __dev_id = 0
     __bus = None
 
-    def __init__(self, a_address=C.MPU6050_DEFAULT_ADDRESS, a_xAOff=None,
-                 a_yAOff=None, a_zAOff=None, a_xGOff=None, a_yGOff=None,
-                 a_zGOff=None, a_debug=False):
+    def __init__(self, a_bus=1, a_address=C.MPU6050_DEFAULT_ADDRESS,
+                 a_xAOff=None, a_yAOff=None, a_zAOff=None, a_xGOff=None,
+                 a_yGOff=None, a_zGOff=None, a_debug=False):
         self.__dev_id = a_address
         # Connect to num 1 SMBus
-        self.__bus = smbus.SMBus(1)
+        self.__bus = smbus.SMBus(a_bus)
         # Set clock source to gyro
         self.set_clock_source(C.MPU6050_CLOCK_PLL_XGYRO)
         # Set accelerometer range
@@ -757,10 +757,8 @@ class MPU6050:
 
     def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
         for index in range(0, a_FIFO_count):
-            a_FIFO_buffer[index] = self.__bus.read_byte_data(self.__dev_id,
-                                                             C.MPU6050_RA_FIFO_R_W)
-        # return self.read_bytes(a_FIFO_buffer, C.MPU6050_RA_FIFO_R_W,
-        #                       a_FIFO_count)
+            a_FIFO_buffer[index] = \
+                self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_FIFO_R_W)
         return a_FIFO_buffer
 
     def get_int_status(self):
@@ -768,12 +766,11 @@ class MPU6050:
                                          C.MPU6050_RA_INT_STATUS)
 
     # Data retrieval from received FIFO buffer
-
     def DMP_get_quaternion_int16(self, a_FIFO_buffer):
         w = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
-        x = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
-        y = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
-        z = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
+        x = c_int16((a_FIFO_buffer[4] << 8) | a_FIFO_buffer[5]).value
+        y = c_int16((a_FIFO_buffer[8] << 8) | a_FIFO_buffer[9]).value
+        z = c_int16((a_FIFO_buffer[12] << 8) | a_FIFO_buffer[13]).value
         return Q(w, x, y, z)
 
     def DMP_get_quaternion(self, a_FIFO_buffer):
@@ -783,33 +780,20 @@ class MPU6050:
         return result
 
     def DMP_get_acceleration_int16(self, a_FIFO_buffer):
-        accel = V()
-        accel.x = c_int16(a_FIFO_buffer[28] << 8 | a_FIFO_buffer[29]).value
-        accel.y = c_int16(a_FIFO_buffer[32] << 8 | a_FIFO_buffer[33]).value
-        accel.z = c_int16(a_FIFO_buffer[36] << 8 | a_FIFO_buffer[37]).value
-        return accel
+        x = c_int16(a_FIFO_buffer[28] << 8 | a_FIFO_buffer[29]).value
+        y = c_int16(a_FIFO_buffer[32] << 8 | a_FIFO_buffer[33]).value
+        z = c_int16(a_FIFO_buffer[36] << 8 | a_FIFO_buffer[37]).value
+        return V(x, y, z)
 
     def DMP_get_gravity(self, a_quat):
-        gravity = V()
-        gravity.x = 2.0 * (a_quat.x * a_quat.z - a_quat.w * a_quat.y)
-        gravity.y = 2.0 * (a_quat.w * a_quat.x + a_quat.y * a_quat.z)
-        gravity.z = 1.0 * (a_quat.w * a_quat.w - a_quat.x * a_quat.x -
-                           a_quat.y * a_quat.y + a_quat.z * a_quat.z)
-        return gravity
+        x = 2.0 * (a_quat.x * a_quat.z - a_quat.w * a_quat.y)
+        y = 2.0 * (a_quat.w * a_quat.x + a_quat.y * a_quat.z)
+        z = 1.0 * (a_quat.w * a_quat.w - a_quat.x * a_quat.x -
+                   a_quat.y * a_quat.y + a_quat.z * a_quat.z)
+        return V(x, y, z)
 
     def DMP_get_linear_accel_int16(self, a_v_raw, a_grav):
-        linear_accel = V()
-        linear_accel.x = c_int16(a_v_raw.x - (a_grav.x*8192)).value
-        linear_accel.y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
-        linear_accel.y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
-        return linear_accel
-
-"""
-Quaternion q;           // [w, x, y, z]         quaternion container
-VectorInt16 aa;         // [x, y, z]            accel sensor measurements
-VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
-VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measurements
-VectorFloat gravity;    // [x, y, z]            gravity vector
-float euler[3];         // [psi, theta, phi]    Euler angle container
-float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-"""
+        x = c_int16(a_v_raw.x - (a_grav.x*8192)).value
+        y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
+        y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
+        return V(x, y, z)

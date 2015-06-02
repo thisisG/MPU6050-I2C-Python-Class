@@ -30,7 +30,7 @@ while count < 10000:
         accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)
         quat = mpu.DMP_get_quaternion_int16(FIFO_buffer)
         grav = mpu.DMP_get_gravity(quat)
-        yaw_pitch_roll = mpu.DMP_get_yaw_pitch_roll(quat, grav)
+        yaw_pitch_roll = mpu.DMP_get_euler_yaw_pitch_roll(quat, grav)
         if count % 100 == 0:
             print('yaw: ' + str(yaw_pitch_roll.x))
             print('pitch: ' + str(yaw_pitch_roll.y))

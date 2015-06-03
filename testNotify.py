@@ -36,15 +36,13 @@ def eventHappened():
 
 
 path = '/sys/class/gpio/gpio30/'
-while 1:
-
-    observer = Observer()
-    event_handler = MyHandler()
-    observer.schedule(event_handler, path, recursive=True)
-    observer.start()
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+observer = Observer()
+event_handler = MyHandler()
+observer.schedule(event_handler, path, recursive=True)
+observer.start()
+try:
+    while True:
+        pass
+except KeyboardInterrupt:
+    observer.stop()
+observer.join()

@@ -7,6 +7,8 @@
  * echo 30 > /sys/class/gpio/export
  * Associated directory:
  * ls /sys/class/gpio/gpio30/
+ * The current value of the pin can be found in the file:
+ * /sys/class/gpio/gpio30/value
  */
 
 /dts-v1/;

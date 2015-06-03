@@ -681,14 +681,17 @@ class MPU6050:
                 self.get_int_status()
 
             else:
-                # configuration block loading failed
+                if self.__debug:
+                    print('Configuration block loading failed')
                 return 2
 
         else:
-            # main binary block loading failed
+            if self.__debug:
+                print('Main binary block loading failed')
             return 1
 
-        # success
+        if self.__debug:
+            print('DMP initialization was successful')
         return 0
 
     # Acceleration and gyro offset setters and getters

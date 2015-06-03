@@ -35,10 +35,13 @@
         target = <&ocp>;
         __overlay__ {
             bs_pinmode_P9_11_0x27_pinmux {
-                compatible = "bone-pinmux-helper";
+                compatible = "gpio-keys";
                 status = "okay";
                 pinctrl-names = "default";
+                debounce_interval = <50>;
+                linux,code = <1>;
                 pinctrl-0 = <&bs_pinmode_P9_11_0x27>;
+                gpio-key,wakeup;
             };
         };
     };

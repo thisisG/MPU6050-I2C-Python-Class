@@ -13,7 +13,7 @@ class MyHandler(FileSystemEventHandler):
     def catch_all(self, event, op):
 
         if event.is_directory:
-            return
+            print event.src_path
 
         filename = event.src_path
         print(filename)
@@ -35,7 +35,8 @@ def eventHappened():
     print('event!')
 
 
-path = '/sys/devices/virtual/gpio/gpio30'
+#path = '/sys/devices/virtual/gpio/gpio30'
+path = '.'
 observer = Observer()
 event_handler = MyHandler()
 observer.schedule(event_handler, path, recursive=True)

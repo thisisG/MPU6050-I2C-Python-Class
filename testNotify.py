@@ -35,7 +35,7 @@ def eventHappened():
     print('event!')
 
 
-path = '/sys/class/gpio/gpio30/'
+path = '/sys/devices/virtual/gpio/gpio30'
 observer = Observer()
 event_handler = MyHandler()
 observer.schedule(event_handler, path, recursive=True)

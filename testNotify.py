@@ -42,7 +42,7 @@ observer.schedule(event_handler, path, recursive=True)
 observer.start()
 try:
     while True:
-        pass
+        sleep(1)
 except KeyboardInterrupt:
     observer.stop()
 observer.join()

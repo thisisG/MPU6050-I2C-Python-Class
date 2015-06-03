@@ -21,12 +21,16 @@ FIFO_count_list = list()
 while count < 10000:
     FIFO_count = mpu.get_FIFO_count()
     mpu_int_status = mpu.get_int_status()
-    while FIFO_count < packet_size:
-        FIFO_count = mpu.get_FIFO_count()
-    if FIFO_count == 1024:
+
+    # If overflow is detected by status or fifo count we want to reset
+    if (FIFO_count == 1024) or (mpu_int_status & 0x10 ):
         mpu.reset_FIFO()
         print('overflow!')
-    else:
+    # Check if fifo data is ready
+    elif (mpu_int_status & 0x02):
+        # Wait until packet_size number of bytes are ready for reading
+        while FIFO_count < packet_size:
+            FIFO_count = mpu.get_FIFO_count()
         FIFO_buffer = mpu.get_FIFO_bytes(FIFO_buffer, packet_size)
         accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)
         quat = mpu.DMP_get_quaternion_int16(FIFO_buffer)

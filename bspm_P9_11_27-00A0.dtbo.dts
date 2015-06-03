@@ -1,0 +1,43 @@
+/*
+ * Generated using http://kilobaser.com/blog/2014-07-28-beaglebone-black-devicetreeoverlay-generator#dtogenerator
+ * To compile:
+ * dtc -O dtb -o /lib/firmware/bspm_P9_11_27-00A0.dtbo -b 0 -@ /lib/firmware/bspm_P9_11_27-00A0.dts
+ * To use:
+ * echo bspm_P9_11_27 > /sys/devices/bone_capemgr.?/slots
+ * echo 30 > /sys/class/gpio/export
+ * Associated directory:
+ * ls /sys/class/gpio/gpio30/
+ */
+
+/dts-v1/;
+/plugin/;
+
+/{
+    compatible = "ti,beaglebone", "ti,beaglebone-black";
+    part_number = "BS_PINMODE_P9_11_0x27";
+
+    exclusive-use =
+        "P9.11",
+        "gpio0_30";
+
+    fragment@0 {
+        target = <&am33xx_pinmux>;
+        __overlay__ {
+            bs_pinmode_P9_11_0x27: pinmux_bs_pinmode_P9_11_0x27 {
+                pinctrl-single,pins = <0x070 0x27>;
+            };
+        };
+    };
+
+    fragment@1 {
+        target = <&ocp>;
+        __overlay__ {
+            bs_pinmode_P9_11_0x27_pinmux {
+                compatible = "bone-pinmux-helper";
+                status = "okay";
+                pinctrl-names = "default";
+                pinctrl-0 = <&bs_pinmode_P9_11_0x27>;
+            };
+        };
+    };
+};

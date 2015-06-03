@@ -25,6 +25,7 @@ while count < 10000:
         FIFO_count = mpu.get_FIFO_count()
     if FIFO_count == 1024:
         mpu.reset_FIFO()
+        print('overflow!')
     else:
         FIFO_buffer = mpu.get_FIFO_bytes(FIFO_buffer, packet_size)
         accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)

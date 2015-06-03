@@ -47,13 +47,13 @@ THE SOFTWARE.
 """
 
 #from Adafruit_I2C import Adafruit_I2C
-import smbus
-from MPUConstants import MPUConstants as C
+from math import atan2, atan, sqrt, pi
 from ctypes import c_int16, c_int8
 from time import sleep
+import smbus
+from MPUConstants import MPUConstants as C
 from Quaternion import Quaternion as Q
 from Quaternion import XYZVector as V
-from math import atan2, atan, sqrt, pi
 
 
 class MPU6050:
@@ -145,6 +145,7 @@ class MPU6050:
 
     def write_memory_block(self, a_data_list, a_data_size, a_bank, a_address,
                            a_verify):
+        success = True
         self.set_memory_bank(a_bank)
         self.set_memory_start_address(a_address)
 
@@ -152,12 +153,17 @@ class MPU6050:
         # memory bank and address
         for i in range(0, a_data_size):
             # Write each data to memory
-            self.__bus.write_byte_data(
-                self.__dev_id, C.MPU6050_RA_MEM_R_W, a_data_list[i])
+            self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_MEM_R_W,
+                                       a_data_list[i])
 
             if a_verify:
-                # TODO implement verification
-                pass
+                self.set_memory_bank(a_bank)
+                self.set_memory_start_address(a_address)
+                verify_data = self.__bus.read_byte_data(self.__dev_id,
+                                                        C.MPU6050_RA_MEM_R_W)
+                if verify_data != a_data_list[i]:
+                    success = False
+
 
             # If we've filled the bank, change the memory bank
             if a_address == 255:
@@ -170,9 +176,7 @@ class MPU6050:
             # Either way update the memory address
             self.set_memory_start_address(a_address)
 
-        # TODO Implement a check to ensure the thrutiness of the function, most
-        # likely using the verify stage
-        return True
+        return success
 
     def wake_up(self):
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_SLEEP_BIT, 0)

@@ -1,5 +1,6 @@
 import sys
 import time
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 class MyHandler(FileSystemEventHandler):
@@ -43,7 +44,7 @@ while 1:
     observer.start()
     try:
         while True:
-            time.sleep(1)
+            pass
     except KeyboardInterrupt:
         observer.stop()
     observer.join()

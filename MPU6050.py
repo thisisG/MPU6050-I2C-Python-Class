@@ -767,7 +767,6 @@ class MPU6050:
             return_list.append(
                 self.__bus.read_byte_data(self.__dev_id,
                                           C.MPU6050_RA_FIFO_R_W))
-            print(return_list[index])
         return return_list
 
     def get_int_status(self):

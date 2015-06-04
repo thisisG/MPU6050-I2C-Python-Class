@@ -21,7 +21,7 @@ class MPUContainer:
 
     def __init__(self, i2c_bus, device_address, x_accel_offset, y_accel_offset,
                  z_accel_offset, x_gyro_offset, y_gyro_offset, z_gyro_offset,
-                 enable_debug_output)
+                 enable_debug_output):
 
         self.__mpu = MPU6050(i2c_bus, device_address, x_accel_offset,
                              y_accel_offset, z_accel_offset, x_gyro_offset,

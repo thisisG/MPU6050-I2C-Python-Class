@@ -32,3 +32,10 @@ handler = MPU6050IRQHandler(mpu)
 
 GPIO.setup("P9_11", GPIO.IN)
 GPIO.add_event_detect("P9_11", GPIO.RISING, callback=handler.action)
+
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    GPIO.cleanup()
+GPIO.cleanup()

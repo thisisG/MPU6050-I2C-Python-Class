@@ -48,8 +48,9 @@ THE SOFTWARE.
 
 from math import atan2, atan, sqrt, pi
 from ctypes import c_int16, c_int8
-from time import sleep
+from time import sleep, clock
 import smbus
+import csv
 from MPUConstants import MPUConstants as C
 from Quaternion import Quaternion as Q
 from Quaternion import XYZVector as V
@@ -848,6 +849,10 @@ class MPU6050IRQHandler:
     __count = 0
     __packet_size = None
     __detected_IO_error = False
+    __logging = False
+    __log_file = None
+    __csv_writer = None
+    __start_time = None
 
     # def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
     #             a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
@@ -856,13 +861,20 @@ class MPU6050IRQHandler:
     #                         a_y_accel_offset, a_z_accel_offset,
     #                         a_x_gyro_offset, a_y_gyro_offset, a_z_gyro_offset,
     #                         a_enable_debug_output)
-    def __init__(self, a_mpu):
+    def __init__(self, a_mpu, a_logging=False):
         self.__mpu = a_mpu
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
         self.__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
         mpu_int_status = self.__mpu.get_int_status()
+        if a_logging:
+            self.__start_time = clock()
+            self.__logging = True
+            self.__log_file = open('test.csv', 'wb')
+            self.__csv_writer = csv.writer(log_file, delimiter=',',
+                                           quotechar='|',
+                                           quoting=csv.QUOTE_MINIMAL)
 
     def action(self, channel):
         if self.__detected_IO_error:
@@ -907,6 +919,11 @@ class MPU6050IRQHandler:
                 grav = self.__mpu.DMP_get_gravity(quat)
                 yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
                                                                          grav)
+                if self.__logging:
+                    delta_time = clock() - self.__start_time
+                    data_concat = [delta_time] + accel + yaw_pitch_roll
+                    self.__csv_writer.writerow(data_concat)
+
                 if self.__count % 100 == 0:
                     print('yaw: ' + str(yaw_pitch_roll.x))
                     print('pitch: ' + str(yaw_pitch_roll.y))

@@ -16,35 +16,12 @@ z_gyro_offset = -5
 enable_debug_output = True
 
 
-class MPUContainer:
-    mpu = None
-
-    def __init__(self, i2c_bus, device_address, x_accel_offset, y_accel_offset,
-                 z_accel_offset, x_gyro_offset, y_gyro_offset, z_gyro_offset,
-                 enable_debug_output):
-
-        self.mpu = MPU6050(i2c_bus, device_address, x_accel_offset,
-                             y_accel_offset, z_accel_offset, x_gyro_offset,
-                             y_gyro_offset, z_gyro_offset, enable_debug_output)
-
-mpuC = MPUContainer(i2c_bus, device_address, x_accel_offset, y_accel_offset,
-                 z_accel_offset, x_gyro_offset, y_gyro_offset, z_gyro_offset,
-                 enable_debug_output)
-
-mpuC.mpu.dmp_initialize()
-mpuC.mpu.set_DMP_enabled(True)
-mpu_int_status = mpuC.mpu.get_int_status()
-print(hex(mpu_int_status))
-
-packet_size = mpuC.mpu.DMP_get_FIFO_packet_size()
-print(packet_size)
-FIFO_count = mpuC.mpu.get_FIFO_count()
-print(FIFO_count)
-
-handler = MPU6050IRQHandler(mpuC.mpu)
+mpuC = MPU6050IRQHandler(i2c_bus, device_address, x_accel_offset,
+                         y_accel_offset, z_accel_offset, x_gyro_offset,
+                         y_gyro_offset, z_gyro_offset, enable_debug_output)
 
 GPIO.setup("P9_11", GPIO.IN)
-GPIO.add_event_detect("P9_11", GPIO.RISING, callback=handler.action)
+GPIO.add_event_detect("P9_11", GPIO.RISING, callback=mpuC.action)
 
 try:
     while True:

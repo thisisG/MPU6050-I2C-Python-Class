@@ -856,11 +856,11 @@ class MPU6050IRQHandler:
                              a_y_accel_offset, a_z_accel_offset,
                              a_x_gyro_offset, a_y_gyro_offset, a_z_gyro_offset,
                              a_enable_debug_output)
-        self.__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
-        print(self.__packet_size)
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
+        self.__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
+        print('packet size: ' + str(self.__packet_size))
         mpu_int_status = self.__mpu.get_int_status()
         print(hex(mpu_int_status))
 

@@ -841,41 +841,50 @@ class MPU6050:
 
 
 class MPU6050IRQHandler:
-    mpu = MPU6050
+    __mpu = MPU6050
     __FIFO_buffer = list()
     __count = 0
     __packet_size = 0
 
-    def __init__(self, a_mpu):
-        self.mpu = a_mpu
+    def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
+                 a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
+                 a_y_gyro_offset, a_z_gyro_offset, a_enable_debug_output):
+        self.mpu = MPU6050(a_i2c_bus, a_device_address, a_x_accel_offset,
+                           a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
+                           a_y_gyro_offset, a_z_gyro_offset,
+                           a_enable_debug_output)
         self__packet_size = self.mpu.DMP_get_FIFO_packet_size()
         self.__FIFO_buffer = [0]*64
+        __mpu.dmp_initialize()
+        __mpu.set_DMP_enabled(True)
+        mpu_int_status = __mpu.get_int_status()
+        print(hex(mpu_int_status))
 
     def action(self, channel):
-        FIFO_count = self.mpu.get_FIFO_count()
+        FIFO_count = self.__mpu.get_FIFO_count()
         print('FIFO_count :' + str(FIFO_count))
-        mpu_int_status = self.mpu.get_int_status()
+        mpu_int_status = self.__mpu.get_int_status()
         print('mpu_int_status :' + str(mpu_int_status))
 
         # If overflow is detected by status or fifo count we want to reset
         if (FIFO_count == 1024) or (mpu_int_status & 0x10):
-            self.mpu.reset_FIFO()
+            self.__mpu.reset_FIFO()
             print('overflow!')
 
         elif (mpu_int_status & 0x02):
             # Wait until packet_size number of bytes are ready for reading,
             # default is 42 bytes
             while FIFO_count < self.__packet_size:
-                FIFO_count = self.mpu.get_FIFO_count()
-            self.__FIFO_buffer = self.mpu.get_FIFO_bytes(self.__FIFO_buffer,
+                FIFO_count = self.__mpu.get_FIFO_count()
+            self.__FIFO_buffer = self.__mpu.get_FIFO_bytes(self.__FIFO_buffer,
                                                            self.__packet_size)
             print(self.__FIFO_buffer)
-            accel = self.mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
-            quat = self.mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
-            grav = self.mpu.DMP_get_gravity(quat)
-            #yaw_pitch_roll = self.mpu.DMP_get_euler_yaw_pitch_roll(quat,
+            accel = self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
+            quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
+            grav = self.__mpu.DMP_get_gravity(quat)
+            # yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
             #                                                         grav)
-            #if self.__count % 100 == 0:
+            # if self.__count % 100 == 0:
             #    print('yaw: ' + str(yaw_pitch_roll.x))
             #    print('pitch: ' + str(yaw_pitch_roll.y))
             #    print('roll: ' + str(yaw_pitch_roll.z))

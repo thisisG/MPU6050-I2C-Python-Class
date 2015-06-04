@@ -846,8 +846,8 @@ class MPU6050:
 class MPU6050IRQHandler:
     __mpu = MPU6050
     __FIFO_buffer = list()
-    __count = 0
-    __packet_size = 0
+    __count = =
+    __packet_size = None
 
     def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
                  a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
@@ -857,6 +857,7 @@ class MPU6050IRQHandler:
                              a_x_gyro_offset, a_y_gyro_offset, a_z_gyro_offset,
                              a_enable_debug_output)
         self.__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
+        print(self.__packet_size)
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)

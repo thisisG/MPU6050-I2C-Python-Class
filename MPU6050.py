@@ -868,13 +868,14 @@ class MPU6050IRQHandler:
                 FIFO_count = self.__mpu.get_FIFO_count()
             self.__FIFO_buffer = self.__mpu.get_FIFO_bytes(self.__FIFO_buffer,
                                                            self.__packet_size)
+            print(self.__FIFO_buffer)
             accel = self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
             quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
             grav = self.__mpu.DMP_get_gravity(quat)
-            yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
-                                                                     grav)
-            if self.__count % 100 == 0:
-                print('yaw: ' + str(yaw_pitch_roll.x))
-                print('pitch: ' + str(yaw_pitch_roll.y))
-                print('roll: ' + str(yaw_pitch_roll.z))
+            #yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
+            #                                                         grav)
+            #if self.__count % 100 == 0:
+            #    print('yaw: ' + str(yaw_pitch_roll.x))
+            #    print('pitch: ' + str(yaw_pitch_roll.y))
+            #    print('roll: ' + str(yaw_pitch_roll.z))
             self.__count += 1

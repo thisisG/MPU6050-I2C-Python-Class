@@ -872,6 +872,7 @@ class MPU6050IRQHandler:
             mpu_int_status = self.__mpu.get_int_status()
             self.__mpu.reset_FIFO()
             self.__detected_IO_error = False
+            return
 
         try:
             FIFO_count = self.__mpu.get_FIFO_count()

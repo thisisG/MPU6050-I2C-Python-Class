@@ -848,7 +848,7 @@ class MPU6050IRQHandler:
     __count = 0
     __packet_size = None
 
-    #def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
+    # def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
     #             a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
     #             a_y_gyro_offset, a_z_gyro_offset, a_enable_debug_output):
     #    self.__mpu = MPU6050(a_i2c_bus, a_device_address, a_x_accel_offset,
@@ -881,15 +881,19 @@ class MPU6050IRQHandler:
             # default is 42 bytes
             while FIFO_count < self.__packet_size:
                 FIFO_count = self.__mpu.get_FIFO_count()
-            self.__FIFO_buffer = self.__mpu.get_FIFO_bytes(self.__packet_size)
-            #print(self.__FIFO_buffer)
-            accel = self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
-            quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
-            grav = self.__mpu.DMP_get_gravity(quat)
-            yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
-                                                                    grav)
-            if self.__count % 100 == 0:
-               print('yaw: ' + str(yaw_pitch_roll.x))
-               print('pitch: ' + str(yaw_pitch_roll.y))
-               print('roll: ' + str(yaw_pitch_roll.z))
-            self.__count += 1
+            while FIFO_count > self.__packet_size:
+                self.__FIFO_buffer = \
+                    self.__mpu.get_FIFO_bytes(self.__packet_size)
+                # print(self.__FIFO_buffer)
+                accel = \
+                    self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
+                quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
+                grav = self.__mpu.DMP_get_gravity(quat)
+                yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
+                                                                         grav)
+                if self.__count % 100 == 0:
+                    print('yaw: ' + str(yaw_pitch_roll.x))
+                    print('pitch: ' + str(yaw_pitch_roll.y))
+                    print('roll: ' + str(yaw_pitch_roll.z))
+                self.__count += 1
+                FIFO_count -= self.__packet_size

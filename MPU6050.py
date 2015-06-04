@@ -862,9 +862,7 @@ class MPU6050IRQHandler:
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
         self.__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
-        print('packet size: ' + str(self.__packet_size))
         mpu_int_status = self.__mpu.get_int_status()
-        print(hex(mpu_int_status))
 
     def action(self, channel):
         if self.__detected_IO_error:
@@ -884,7 +882,6 @@ class MPU6050IRQHandler:
         if (FIFO_count == 1024) or (mpu_int_status & 0x10):
             try:
                 self.__mpu.reset_FIFO()
-                print('overflow!')
             except IOError:
                 self.__detected_IO_error = True
 

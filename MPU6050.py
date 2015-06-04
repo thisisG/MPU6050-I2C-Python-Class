@@ -855,8 +855,8 @@ class MPU6050IRQHandler:
                              a_enable_debug_output)
         self__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
         self.__FIFO_buffer = [0]*64
-        __mpu.dmp_initialize()
-        __mpu.set_DMP_enabled(True)
+        self.__mpu.dmp_initialize()
+        self.__mpu.set_DMP_enabled(True)
         mpu_int_status = __mpu.get_int_status()
         print(hex(mpu_int_status))
 

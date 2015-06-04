@@ -857,7 +857,7 @@ class MPU6050IRQHandler:
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
         self.__mpu.set_DMP_enabled(True)
-        mpu_int_status = __mpu.get_int_status()
+        mpu_int_status = self.__mpu.get_int_status()
         print(hex(mpu_int_status))
 
     def action(self, channel):

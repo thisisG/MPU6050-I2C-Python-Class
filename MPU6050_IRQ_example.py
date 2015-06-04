@@ -1,3 +1,4 @@
+import time
 from MPU6050 import MPU6050
 from MPU6050 import MPU6050IRQHandler
 import Adafruit_BBIO.GPIO as GPIO

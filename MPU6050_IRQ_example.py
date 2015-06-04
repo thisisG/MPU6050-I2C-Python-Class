@@ -33,8 +33,8 @@ mpuC = MPUContainer(i2c_bus, device_address, x_accel_offset, y_accel_offset,
 
 mpuC.mpu.dmp_initialize()
 mpuC.mpu.set_DMP_enabled(True)
-mpuC.mpu_int_status = mpu.get_int_status()
-print(hex(mpuC.mpu_int_status))
+mpu_int_status = mpuC.mpu.get_int_status()
+print(hex(mpu_int_status))
 
 packet_size = mpuC.mpu.DMP_get_FIFO_packet_size()
 print(packet_size)

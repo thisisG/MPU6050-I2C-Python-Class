@@ -765,6 +765,7 @@ class MPU6050:
         for index in range(0, a_FIFO_count):
             a_FIFO_buffer[index] = \
                 self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_FIFO_R_W)
+            print(a_FIFO_buffer[index])
         return a_FIFO_buffer
 
     def get_int_status(self):

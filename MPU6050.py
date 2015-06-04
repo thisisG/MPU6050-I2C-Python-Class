@@ -871,7 +871,7 @@ class MPU6050IRQHandler:
         if a_logging:
             self.__start_time = clock()
             self.__logging = True
-            self.__log_file = open('test.csv', 'wb')
+            self.__log_file = open('test.csv', 'wab')
             self.__csv_writer = csv.writer(self.__log_file, delimiter=',',
                                            quotechar='|',
                                            quoting=csv.QUOTE_MINIMAL)

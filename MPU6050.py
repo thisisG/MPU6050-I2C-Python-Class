@@ -542,7 +542,7 @@ class MPU6050:
                 if self.__debug:
                     print('Getting FIFO buffer')
                 FIFO_buffer = [0] * 128
-                FIFO_buffer = self.get_FIFO_bytes(FIFO_buffer, FIFO_count)
+                FIFO_buffer = self.get_FIFO_bytes(FIFO_count)
 
                 if self.__debug:
                     print('Setting motion detection threshold to 2')
@@ -618,7 +618,7 @@ class MPU6050:
                 if self.__debug:
                     print('Current FIFO count = ' + repr(FIFO_count))
                     print('Reading FIFO data')
-                FIFO_buffer = self.get_FIFO_bytes(FIFO_buffer, FIFO_count)
+                FIFO_buffer = self.get_FIFO_bytes(FIFO_count)
 
                 if self.__debug:
                     print('Reading interrupt status')
@@ -645,7 +645,7 @@ class MPU6050:
                 if self.__debug:
                     print('Current FIFO count = ' + repr(FIFO_count))
                     print('Reading FIFO count')
-                FIFO_buffer = self.get_FIFO_bytes(FIFO_buffer, FIFO_count)
+                FIFO_buffer = self.get_FIFO_bytes(FIFO_count)
 
                 if self.__debug:
                     print('Reading interrupt status')
@@ -761,12 +761,14 @@ class MPU6050:
         data = self.read_bytes(data, C.MPU6050_RA_FIFO_COUNTH, 2)
         return (data[0] << 8) | data[1]
 
-    def get_FIFO_bytes(self, a_FIFO_buffer, a_FIFO_count):
+    def get_FIFO_bytes(self, a_FIFO_count):
+        return_list = list()
         for index in range(0, a_FIFO_count):
-            a_FIFO_buffer[index] = \
-                self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_FIFO_R_W)
-            print(a_FIFO_buffer[index])
-        return a_FIFO_buffer
+            return_list.append(
+                self.__bus.read_byte_data(self.__dev_id,
+                                          C.MPU6050_RA_FIFO_R_W))
+            print(return_list[index])
+        return return_list
 
     def get_int_status(self):
         return self.__bus.read_byte_data(self.__dev_id,
@@ -877,8 +879,7 @@ class MPU6050IRQHandler:
             # default is 42 bytes
             while FIFO_count < self.__packet_size:
                 FIFO_count = self.__mpu.get_FIFO_count()
-            self.__FIFO_buffer = self.__mpu.get_FIFO_bytes(self.__FIFO_buffer,
-                                                           self.__packet_size)
+            self.__FIFO_buffer = self.__mpu.get_FIFO_bytes(self.__packet_size)
             print(self.__FIFO_buffer)
             accel = self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
             quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)

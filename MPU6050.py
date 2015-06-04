@@ -846,7 +846,7 @@ class MPU6050:
 class MPU6050IRQHandler:
     __mpu = MPU6050
     __FIFO_buffer = list()
-    __count = =
+    __count = 0
     __packet_size = None
 
     def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,

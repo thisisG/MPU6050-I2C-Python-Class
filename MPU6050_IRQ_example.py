@@ -18,7 +18,7 @@ enable_debug_output = True
 mpu = MPU6050(i2c_bus, device_address, x_accel_offset,
                          y_accel_offset, z_accel_offset, x_gyro_offset,
                          y_gyro_offset, z_gyro_offset, enable_debug_output)
-mpuC = MPU6050IRQHandler(mpu)
+mpuC = MPU6050IRQHandler(mpu, True)
 
 GPIO.setup("P9_11", GPIO.IN)
 GPIO.add_event_detect("P9_11", GPIO.RISING, callback=mpuC.action)

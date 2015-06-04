@@ -847,6 +847,7 @@ class MPU6050IRQHandler:
     __FIFO_buffer = list()
     __count = 0
     __packet_size = None
+    __detected_IO_error = False
 
     # def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
     #             a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
@@ -866,10 +867,17 @@ class MPU6050IRQHandler:
         print(hex(mpu_int_status))
 
     def action(self, channel):
-        FIFO_count = self.__mpu.get_FIFO_count()
-        #print('FIFO_count :' + str(FIFO_count))
-        mpu_int_status = self.__mpu.get_int_status()
-        #print('mpu_int_status :' + str(mpu_int_status))
+        if self.__detected_IO_error:
+            # Clear FIFO and reset MPU
+            mpu_int_status = self.__mpu.get_int_status()
+            self.__mpu.reset_FIFO()
+            self.__detected_IO_error = False
+
+        try:
+            FIFO_count = self.__mpu.get_FIFO_count()
+            mpu_int_status = self.__mpu.get_int_status()
+        except IOError:
+            self.__detected_IO_error = True
 
         # If overflow is detected by status or fifo count we want to reset
         if (FIFO_count == 1024) or (mpu_int_status & 0x10):
@@ -877,7 +885,7 @@ class MPU6050IRQHandler:
                 self.__mpu.reset_FIFO()
                 print('overflow!')
             except IOError:
-                pass
+                self.__detected_IO_error = True
 
         elif (mpu_int_status & 0x02):
             # Wait until packet_size number of bytes are ready for reading,
@@ -886,7 +894,7 @@ class MPU6050IRQHandler:
                 try:
                     FIFO_count = self.__mpu.get_FIFO_count()
                 except IOError:
-                    pass
+                    self.__detected_IO_error = True
 
             while FIFO_count > self.__packet_size:
 
@@ -894,7 +902,7 @@ class MPU6050IRQHandler:
                     self.__FIFO_buffer = \
                         self.__mpu.get_FIFO_bytes(self.__packet_size)
                 except IOError:
-                    pass
+                    self.__detected_IO_error = True
                 accel = \
                     self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
                 quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)

@@ -849,7 +849,7 @@ class MPU6050IRQHandler:
     def __init__(self, a_mpu):
         self.__mpu = a_mpu
         self__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
-        self.__FIFO_buffer = [0]*self.__packet_size
+        self.__FIFO_buffer = [0]*64
 
     def action(self, channel):
         FIFO_count = self.__mpu.get_FIFO_count()

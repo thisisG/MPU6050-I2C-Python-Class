@@ -850,24 +850,24 @@ class MPU6050IRQHandler:
         self.__FIFO_buffer = [0]*self.__mpu.DMP_get_FIFO_packet_size()
 
     def action(self, channel):
-        FIFO_count = mpu.get_FIFO_count()
-        mpu_int_status = mpu.get_int_status()
+        FIFO_count = self.__mpu.get_FIFO_count()
+        mpu_int_status = self.__mpu.get_int_status()
 
         # If overflow is detected by status or fifo count we want to reset
         if (FIFO_count == 1024) or (mpu_int_status & 0x10):
-            mpu.reset_FIFO()
+            self.__mpu.reset_FIFO()
             print('overflow!')
 
         elif (mpu_int_status & 0x02):
             # Wait until packet_size number of bytes are ready for reading,
             # default is 42 bytes
             while FIFO_count < packet_size:
-                FIFO_count = mpu.get_FIFO_count()
-            FIFO_buffer = mpu.get_FIFO_bytes(FIFO_buffer, packet_size)
-            accel = mpu.DMP_get_acceleration_int16(FIFO_buffer)
-            quat = mpu.DMP_get_quaternion_int16(FIFO_buffer)
-            grav = mpu.DMP_get_gravity(quat)
-            yaw_pitch_roll = mpu.DMP_get_euler_yaw_pitch_roll(quat, grav)
+                FIFO_count = self.__mpu.get_FIFO_count()
+            FIFO_buffer = self.__mpu.get_FIFO_bytes(FIFO_buffer, packet_size)
+            accel = self.__mpu.DMP_get_acceleration_int16(FIFO_buffer)
+            quat = self.__mpu.DMP_get_quaternion_int16(FIFO_buffer)
+            grav = self.__mpu.DMP_get_gravity(quat)
+            yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat, grav)
             if self.__count % 100 == 0:
                 print('yaw: ' + str(yaw_pitch_roll.x))
                 print('pitch: ' + str(yaw_pitch_roll.y))

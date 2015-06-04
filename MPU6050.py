@@ -853,6 +853,7 @@ class MPU6050IRQHandler:
 
     def action(self, channel):
         FIFO_count = self.__mpu.get_FIFO_count()
+        print('FIFO_count :' + str(FIFO_count))
         mpu_int_status = self.__mpu.get_int_status()
 
         # If overflow is detected by status or fifo count we want to reset

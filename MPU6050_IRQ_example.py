@@ -15,7 +15,7 @@ y_gyro_offset = -72
 z_gyro_offset = -5
 enable_debug_output = True
 
-mpu = mpu = MPU6050(i2c_bus, device_address, x_accel_offset, y_accel_offset,
+mpu = MPU6050(i2c_bus, device_address, x_accel_offset, y_accel_offset,
                     z_accel_offset, x_gyro_offset, y_gyro_offset, z_gyro_offset,
                     enable_debug_output)
 

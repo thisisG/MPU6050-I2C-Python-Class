@@ -14,11 +14,13 @@ x_gyro_offset = -2
 y_gyro_offset = -72
 z_gyro_offset = -5
 enable_debug_output = True
+enable_logging = True
+log_file = 'mpulog.csv'
 
 mpu = MPU6050(i2c_bus, device_address, x_accel_offset,
                          y_accel_offset, z_accel_offset, x_gyro_offset,
                          y_gyro_offset, z_gyro_offset, enable_debug_output)
-mpuC = MPU6050IRQHandler(mpu, True)
+mpuC = MPU6050IRQHandler(mpu, enable_logging, log_file)
 
 GPIO.setup("P9_11", GPIO.IN)
 GPIO.add_event_detect("P9_11", GPIO.RISING, callback=mpuC.action)

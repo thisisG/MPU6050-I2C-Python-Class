@@ -815,26 +815,26 @@ class MPU6050:
                     2*a_quat.w*a_quat.w + 2*a_quat.z*a_quat.z - 1)
         return V(psi, theta, phi)
 
-    def DMP_get_yaw_pitch_roll(self, a_quat, a_grav_vect):
-        # yaw: (about Z axis)
-        yaw = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
-                    2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
-        # pitch: (nose up/down, about Y axis)
-        pitch = atan(a_grav_vect.x /
-                     sqrt(a_grav_vect.y*a_grav_vect.y +
-                          a_grav_vect.z*a_grav_vect.z))
+    def DMP_get_roll_pitch_yaw(self, a_quat, a_grav_vect):
         # roll: (tilt left/right, about X axis)
         roll = atan(a_grav_vect.y /
                     sqrt(a_grav_vect.x*a_grav_vect.x +
                          a_grav_vect.z*a_grav_vect.z))
+        # pitch: (nose up/down, about Y axis)
+        pitch = atan(a_grav_vect.x /
+                     sqrt(a_grav_vect.y*a_grav_vect.y +
+                          a_grav_vect.z*a_grav_vect.z))
+        # yaw: (about Z axis)
+        yaw = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
+                    2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
         return V(yaw, pitch, roll)
 
-    def DMP_get_euler_yaw_pitch_roll(self, a_quat, a_grav_vect):
+    def DMP_get_euler_roll_pitch_yaw(self, a_quat, a_grav_vect):
         rad_ypr = self.DMP_get_yaw_pitch_roll(a_quat, a_grav_vect)
-        yaw = rad_ypr.x * (180.0/pi)
-        pitch = rad_ypr.y * (180.0/pi)
         roll = rad_ypr.z * (180.0/pi)
-        return V(yaw, pitch, roll)
+        pitch = rad_ypr.y * (180.0/pi)
+        yaw = rad_ypr.x * (180.0/pi)
+        return V(roll, pitch, yaw)
 
     def DMP_get_linear_accel(self, a_vector_raw, a_vect_grav):
         x = a_vector_raw.x - a_vect_grav.x*8192
@@ -861,7 +861,7 @@ class MPU6050IRQHandler:
     #                         a_y_accel_offset, a_z_accel_offset,
     #                         a_x_gyro_offset, a_y_gyro_offset, a_z_gyro_offset,
     #                         a_enable_debug_output)
-    def __init__(self, a_mpu, a_logging=False):
+    def __init__(self, a_mpu, a_logging=False, a_log_file = 'log.csv'):
         self.__mpu = a_mpu
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
@@ -871,7 +871,7 @@ class MPU6050IRQHandler:
         if a_logging:
             self.__start_time = clock()
             self.__logging = True
-            self.__log_file = open('test.csv', 'ab')
+            self.__log_file = open(a_log_file, 'ab')
             self.__csv_writer = csv.writer(self.__log_file, delimiter=',',
                                            quotechar='|',
                                            quoting=csv.QUOTE_MINIMAL)
@@ -917,7 +917,7 @@ class MPU6050IRQHandler:
                     self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
                 quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
                 grav = self.__mpu.DMP_get_gravity(quat)
-                yaw_pitch_roll = self.__mpu.DMP_get_euler_yaw_pitch_roll(quat,
+                yaw_pitch_roll = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat,
                                                                          grav)
                 if self.__logging:
                     delta_time = clock() - self.__start_time
@@ -926,8 +926,8 @@ class MPU6050IRQHandler:
                     self.__csv_writer.writerow(data_concat)
 
                 if self.__count % 100 == 0:
-                    print('yaw: ' + str(yaw_pitch_roll.x))
+                    print('roll: ' + str(yaw_pitch_roll.x))
                     print('pitch: ' + str(yaw_pitch_roll.y))
-                    print('roll: ' + str(yaw_pitch_roll.z))
+                    print('yaw: ' + str(yaw_pitch_roll.z))
                 self.__count += 1
                 FIFO_count -= self.__packet_size

@@ -829,13 +829,13 @@ class MPU6050:
         # yaw: (about Z axis)
         yaw = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
                     2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
-        return V(yaw, pitch, roll)
+        return V(roll, pitch, yaw)
 
     def DMP_get_euler_roll_pitch_yaw(self, a_quat, a_grav_vect):
         rad_ypr = self.DMP_get_roll_pitch_yaw(a_quat, a_grav_vect)
-        roll = rad_ypr.z * (180.0/pi)
+        roll = rad_ypr.x * (180.0/pi)
         pitch = rad_ypr.y * (180.0/pi)
-        yaw = rad_ypr.x * (180.0/pi)
+        yaw = rad_ypr.z * (180.0/pi)
         return V(roll, pitch, yaw)
 
     def DMP_get_linear_accel(self, a_vector_raw, a_vect_grav):

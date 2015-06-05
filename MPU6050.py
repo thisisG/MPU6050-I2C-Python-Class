@@ -784,9 +784,11 @@ class MPU6050:
 
     def DMP_get_quaternion(self, a_FIFO_buffer):
         quat = self.DMP_get_quaternion_int16(a_FIFO_buffer)
-        result = Q(quat.w / 16384.0, quat.x / 16384.0,
-                   quat.y / 16384.0, quat.z / 16384.0)
-        return result
+        w = quat.w / 16384.0
+        x = quat.x / 16384.0
+        y = quat.y / 16384.0
+        z = quat.z / 16384.0
+        return Q(w, x, y, z)
 
     def DMP_get_acceleration_int16(self, a_FIFO_buffer):
         x = c_int16(a_FIFO_buffer[28] << 8 | a_FIFO_buffer[29]).value
@@ -861,7 +863,7 @@ class MPU6050IRQHandler:
     #                         a_y_accel_offset, a_z_accel_offset,
     #                         a_x_gyro_offset, a_y_gyro_offset, a_z_gyro_offset,
     #                         a_enable_debug_output)
-    def __init__(self, a_mpu, a_logging=False, a_log_file = 'log.csv'):
+    def __init__(self, a_mpu, a_logging=False, a_log_file='log.csv'):
         self.__mpu = a_mpu
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
@@ -917,17 +919,18 @@ class MPU6050IRQHandler:
                     self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
                 quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
                 grav = self.__mpu.DMP_get_gravity(quat)
-                yaw_pitch_roll = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat,
+                roll_pitch_yaw = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat,
                                                                          grav)
                 if self.__logging:
                     delta_time = clock() - self.__start_time
-                    data_concat = [delta_time] + [accel.x, accel.y, accel.z] + \
-                        [yaw_pitch_roll.x, yaw_pitch_roll.y, yaw_pitch_roll.z]
+                    data_concat = [delta_time] + \
+                        [accel.x, accel.y, accel.z] + \
+                        [roll_pitch_yaw.x, roll_pitch_yaw.y, roll_pitch_yaw.z]
                     self.__csv_writer.writerow(data_concat)
 
                 if self.__count % 100 == 0:
-                    print('roll: ' + str(yaw_pitch_roll.x))
-                    print('pitch: ' + str(yaw_pitch_roll.y))
-                    print('yaw: ' + str(yaw_pitch_roll.z))
+                    print('roll: ' + str(roll_pitch_yaw.x))
+                    print('pitch: ' + str(roll_pitch_yaw.y))
+                    print('yaw: ' + str(roll_pitch_yaw.z))
                 self.__count += 1
                 FIFO_count -= self.__packet_size

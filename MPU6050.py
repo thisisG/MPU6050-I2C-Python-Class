@@ -923,11 +923,11 @@ class MPU6050IRQHandler:
                                                                          grav)
                 if self.__logging:
                     delta_time = clock() - self.__start_time
-                    data_concat = [round(delta_time, 4)] + \
+                    data_concat = ['%.4f' % delta_time] + \
                         [accel.x, accel.y, accel.z] + \
-                        [round(roll_pitch_yaw.x, 3),
-                         round(roll_pitch_yaw.y, 3),
-                         round(roll_pitch_yaw.z, 3)]
+                        ['%.3f' % roll_pitch_yaw.x,
+                         '%.3f' % roll_pitch_yaw.y,
+                         '%.3f' % roll_pitch_yaw.z]
                     self.__csv_writer.writerow(data_concat)
 
                 if self.__count % 100 == 0:

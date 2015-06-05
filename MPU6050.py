@@ -832,7 +832,7 @@ class MPU6050:
         return V(yaw, pitch, roll)
 
     def DMP_get_euler_roll_pitch_yaw(self, a_quat, a_grav_vect):
-        rad_ypr = self.DMP_get_yaw_pitch_roll(a_quat, a_grav_vect)
+        rad_ypr = self.DMP_get_roll_pitch_yaw(a_quat, a_grav_vect)
         roll = rad_ypr.z * (180.0/pi)
         pitch = rad_ypr.y * (180.0/pi)
         yaw = rad_ypr.x * (180.0/pi)

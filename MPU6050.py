@@ -179,7 +179,7 @@ class MPU6050:
 
     def wake_up(self):
         self.write_bit(
-            C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_time.SLEEP_BIT, 0)
+            C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_SLEEP_BIT, 0)
 
     def set_clock_source(self, a_source):
         self.write_bits(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_CLKSEL_BIT,
@@ -199,12 +199,12 @@ class MPU6050:
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1,
                        C.MPU6050_PWR1_DEVICE_RESET_BIT, 1)
 
-    def set_time.sleep_enabled(self, a_enabled):
+    def set_sleep_enabled(self, a_enabled):
         set_bit = 0
         if a_enabled:
             set_bit = 1
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1,
-                       C.MPU6050_PWR1_time.SLEEP_BIT, set_bit)
+                       C.MPU6050_PWR1_SLEEP_BIT, set_bit)
 
     def set_memory_bank(self, a_bank, a_prefetch_enabled=False,
                         a_user_bank=False):
@@ -387,7 +387,7 @@ class MPU6050:
         # time.Sleep a bit while resetting
         time.sleep(50 / 1000)
         # Disable time.sleep mode
-        self.set_time.sleep_enabled(0)
+        self.set_sleep_enabled(0)
 
         # get MPU hardware revision
         if self.__debug:

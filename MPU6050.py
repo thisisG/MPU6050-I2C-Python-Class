@@ -46,9 +46,9 @@ THE SOFTWARE.
 ===============================================
 """
 
-from math import atan2, atan, sqrt, pi
-from ctypes import c_int16, c_int8
-from time import sleep, clock
+import math
+import ctypes
+import time
 import smbus
 import csv
 from MPUConstants import MPUConstants as C
@@ -75,7 +75,7 @@ class MPU6050:
         self.set_full_scale_accel_range(C.MPU6050_ACCEL_FS_2)
         # Set gyro range
         self.set_full_scale_gyro_range(C.MPU6050_GYRO_FS_250)
-        # Take the MPU out of sleep mode
+        # Take the MPU out of time.sleep mode
         self.wake_up()
         # Set offsets
         if a_xAOff:
@@ -103,7 +103,7 @@ class MPU6050:
         else:
             byte &= ~(1 << a_bit_num)
         self.__bus.write_byte_data(
-            self.__dev_id, a_reg_add, c_int8(byte).value)
+            self.__dev_id, a_reg_add, ctypes.c_int8(byte).value)
 
     def read_bits(self, a_reg_add, a_bit_start, a_length):
         byte = self.__bus.read_byte_data(self.__dev_id, a_reg_add)
@@ -123,7 +123,7 @@ class MPU6050:
         byte = byte | a_data
         # Write the data to the I2C device
         self.__bus.write_byte_data(
-            self.__dev_id, a_reg_add, c_int8(byte).value)
+            self.__dev_id, a_reg_add, ctypes.c_int8(byte).value)
 
     def read_memory_byte(self):
         return self.__bus.read_byte_data(self.__dev_id, C.MPU6050_RA_MEM_R_W)
@@ -178,7 +178,8 @@ class MPU6050:
         return success
 
     def wake_up(self):
-        self.write_bit(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_SLEEP_BIT, 0)
+        self.write_bit(
+            C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_time.SLEEP_BIT, 0)
 
     def set_clock_source(self, a_source):
         self.write_bits(C.MPU6050_RA_PWR_MGMT_1, C.MPU6050_PWR1_CLKSEL_BIT,
@@ -198,12 +199,12 @@ class MPU6050:
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1,
                        C.MPU6050_PWR1_DEVICE_RESET_BIT, 1)
 
-    def set_sleep_enabled(self, a_enabled):
+    def set_time.sleep_enabled(self, a_enabled):
         set_bit = 0
         if a_enabled:
             set_bit = 1
         self.write_bit(C.MPU6050_RA_PWR_MGMT_1,
-                       C.MPU6050_PWR1_SLEEP_BIT, set_bit)
+                       C.MPU6050_PWR1_time.SLEEP_BIT, set_bit)
 
     def set_memory_bank(self, a_bank, a_prefetch_enabled=False,
                         a_user_bank=False):
@@ -383,10 +384,10 @@ class MPU6050:
     def dmp_initialize(self):
         # Reset the MPU
         self.reset()
-        # Sleep a bit while resetting
-        sleep(50 / 1000)
-        # Disable sleep mode
-        self.set_sleep_enabled(0)
+        # time.Sleep a bit while resetting
+        time.sleep(50 / 1000)
+        # Disable time.sleep mode
+        self.set_time.sleep_enabled(0)
 
         # get MPU hardware revision
         if self.__debug:
@@ -441,7 +442,7 @@ class MPU6050:
             print('Resetting I2C Master control')
         self.reset_I2C_master()
         # Wait a bit for the device to register the changes
-        sleep(20 / 1000)
+        time.sleep(20 / 1000)
 
         # load DMP code into memory banks
         if self.__debug:
@@ -696,57 +697,57 @@ class MPU6050:
     # Acceleration and gyro offset setters and getters
     def set_x_accel_offset(self, a_offset):
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XA_OFFS_H,
-                                   c_int8(a_offset >> 8).value)
+                                   ctypes.c_int8(a_offset >> 8).value)
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XA_OFFS_L_TC,
-                                   c_int8(a_offset).value)
+                                   ctypes.c_int8(a_offset).value)
 
     def set_y_accel_offset(self, a_offset):
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YA_OFFS_H,
-                                   c_int8(a_offset >> 8).value)
+                                   ctypes.c_int8(a_offset >> 8).value)
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YA_OFFS_L_TC,
-                                   c_int8(a_offset).value)
+                                   ctypes.c_int8(a_offset).value)
 
     def set_z_accel_offset(self, a_offset):
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZA_OFFS_H,
-                                   c_int8(a_offset >> 8).value)
+                                   ctypes.c_int8(a_offset >> 8).value)
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZA_OFFS_L_TC,
-                                   c_int8(a_offset).value)
+                                   ctypes.c_int8(a_offset).value)
 
     def set_x_gyro_offset(self, a_offset):
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XG_OFFS_USRH,
-                                   c_int8(a_offset >> 8).value)
+                                   ctypes.c_int8(a_offset >> 8).value)
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_XG_OFFS_USRL,
-                                   c_int8(a_offset).value)
+                                   ctypes.c_int8(a_offset).value)
 
     def set_y_gyro_offset(self, a_offset):
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YG_OFFS_USRH,
-                                   c_int8(a_offset >> 8).value)
+                                   ctypes.c_int8(a_offset >> 8).value)
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_YG_OFFS_USRL,
-                                   c_int8(a_offset).value)
+                                   ctypes.c_int8(a_offset).value)
 
     def set_z_gyro_offset(self, a_offset):
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZG_OFFS_USRH,
-                                   c_int8(a_offset >> 8).value)
+                                   ctypes.c_int8(a_offset >> 8).value)
         self.__bus.write_byte_data(self.__dev_id, C.MPU6050_RA_ZG_OFFS_USRL,
-                                   c_int8(a_offset).value)
+                                   ctypes.c_int8(a_offset).value)
 
     # Main interfacing functions to get raw data from MPU
     def get_acceleration(self):
         raw_data = self.__bus.read_i2c_block_data(self.__dev_id,
                                                   C.MPU6050_RA_ACCEL_XOUT_H, 6)
         accel = [0] * 3
-        accel[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
-        accel[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
-        accel[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
+        accel[0] = ctypes.c_int16(raw_data[0] << 8 | raw_data[1]).value
+        accel[1] = ctypes.c_int16(raw_data[2] << 8 | raw_data[3]).value
+        accel[2] = ctypes.c_int16(raw_data[4] << 8 | raw_data[5]).value
         return accel
 
     def get_rotation(self):
         raw_data = self.__bus.read_i2c_block_data(self.__dev_id,
                                                   C.MPU6050_RA_GYRO_XOUT_H, 6)
         gyro = [0] * 3
-        gyro[0] = c_int16(raw_data[0] << 8 | raw_data[1]).value
-        gyro[1] = c_int16(raw_data[2] << 8 | raw_data[3]).value
-        gyro[2] = c_int16(raw_data[4] << 8 | raw_data[5]).value
+        gyro[0] = ctypes.c_int16(raw_data[0] << 8 | raw_data[1]).value
+        gyro[1] = ctypes.c_int16(raw_data[2] << 8 | raw_data[3]).value
+        gyro[2] = ctypes.c_int16(raw_data[4] << 8 | raw_data[5]).value
         return gyro
 
     # Interfacing functions to get data from FIFO buffer
@@ -776,10 +777,10 @@ class MPU6050:
 
     # Data retrieval from received FIFO buffer
     def DMP_get_quaternion_int16(self, a_FIFO_buffer):
-        w = c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
-        x = c_int16((a_FIFO_buffer[4] << 8) | a_FIFO_buffer[5]).value
-        y = c_int16((a_FIFO_buffer[8] << 8) | a_FIFO_buffer[9]).value
-        z = c_int16((a_FIFO_buffer[12] << 8) | a_FIFO_buffer[13]).value
+        w = ctypes.c_int16((a_FIFO_buffer[0] << 8) | a_FIFO_buffer[1]).value
+        x = ctypes.c_int16((a_FIFO_buffer[4] << 8) | a_FIFO_buffer[5]).value
+        y = ctypes.c_int16((a_FIFO_buffer[8] << 8) | a_FIFO_buffer[9]).value
+        z = ctypes.c_int16((a_FIFO_buffer[12] << 8) | a_FIFO_buffer[13]).value
         return Q(w, x, y, z)
 
     def DMP_get_quaternion(self, a_FIFO_buffer):
@@ -791,9 +792,9 @@ class MPU6050:
         return Q(w, x, y, z)
 
     def DMP_get_acceleration_int16(self, a_FIFO_buffer):
-        x = c_int16(a_FIFO_buffer[28] << 8 | a_FIFO_buffer[29]).value
-        y = c_int16(a_FIFO_buffer[32] << 8 | a_FIFO_buffer[33]).value
-        z = c_int16(a_FIFO_buffer[36] << 8 | a_FIFO_buffer[37]).value
+        x = ctypes.c_int16(a_FIFO_buffer[28] << 8 | a_FIFO_buffer[29]).value
+        y = ctypes.c_int16(a_FIFO_buffer[32] << 8 | a_FIFO_buffer[33]).value
+        z = ctypes.c_int16(a_FIFO_buffer[36] << 8 | a_FIFO_buffer[37]).value
         return V(x, y, z)
 
     def DMP_get_gravity(self, a_quat):
@@ -804,38 +805,38 @@ class MPU6050:
         return V(x, y, z)
 
     def DMP_get_linear_accel_int16(self, a_v_raw, a_grav):
-        x = c_int16(a_v_raw.x - (a_grav.x*8192)).value
-        y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
-        y = c_int16(a_v_raw.y - (a_grav.y*8192)).value
+        x = ctypes.c_int16(a_v_raw.x - (a_grav.x*8192)).value
+        y = ctypes.c_int16(a_v_raw.y - (a_grav.y*8192)).value
+        y = ctypes.c_int16(a_v_raw.y - (a_grav.y*8192)).value
         return V(x, y, z)
 
     def DMP_get_euler(self, a_quat):
-        psi = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
-                    2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
+        psi = math.atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
+                         2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
         theta = -asin(2*a_quat.x*a_quat.z + 2*a_quat.w*a_quat.y)
-        phi = atan2(2*a_quat.y*a_quat.z - 2*a_quat.w*a_quat.x,
-                    2*a_quat.w*a_quat.w + 2*a_quat.z*a_quat.z - 1)
+        phi = math.atan2(2*a_quat.y*a_quat.z - 2*a_quat.w*a_quat.x,
+                         2*a_quat.w*a_quat.w + 2*a_quat.z*a_quat.z - 1)
         return V(psi, theta, phi)
 
     def DMP_get_roll_pitch_yaw(self, a_quat, a_grav_vect):
         # roll: (tilt left/right, about X axis)
-        roll = atan(a_grav_vect.y /
-                    sqrt(a_grav_vect.x*a_grav_vect.x +
-                         a_grav_vect.z*a_grav_vect.z))
+        roll = math.atan(a_grav_vect.y /
+                         math.sqrt(a_grav_vect.x*a_grav_vect.x +
+                              a_grav_vect.z*a_grav_vect.z))
         # pitch: (nose up/down, about Y axis)
-        pitch = atan(a_grav_vect.x /
-                     sqrt(a_grav_vect.y*a_grav_vect.y +
-                          a_grav_vect.z*a_grav_vect.z))
+        pitch = math.atan(a_grav_vect.x /
+                          math.sqrt(a_grav_vect.y*a_grav_vect.y +
+                               a_grav_vect.z*a_grav_vect.z))
         # yaw: (about Z axis)
-        yaw = atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
-                    2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
+        yaw = math.atan2(2*a_quat.x*a_quat.y - 2*a_quat.w*a_quat.z,
+                         2*a_quat.w*a_quat.w + 2*a_quat.x*a_quat.x - 1)
         return V(roll, pitch, yaw)
 
     def DMP_get_euler_roll_pitch_yaw(self, a_quat, a_grav_vect):
         rad_ypr = self.DMP_get_roll_pitch_yaw(a_quat, a_grav_vect)
-        roll = rad_ypr.x * (180.0/pi)
-        pitch = rad_ypr.y * (180.0/pi)
-        yaw = rad_ypr.z * (180.0/pi)
+        roll = rad_ypr.x * (180.0/math.pi)
+        pitch = rad_ypr.y * (180.0/math.pi)
+        yaw = rad_ypr.z * (180.0/math.pi)
         return V(roll, pitch, yaw)
 
     def DMP_get_linear_accel(self, a_vector_raw, a_vect_grav):
@@ -855,6 +856,7 @@ class MPU6050IRQHandler:
     __log_file = None
     __csv_writer = None
     __start_time = None
+    __debug = None
 
     # def __init__(self, a_i2c_bus, a_device_address, a_x_accel_offset,
     #             a_y_accel_offset, a_z_accel_offset, a_x_gyro_offset,
@@ -863,7 +865,8 @@ class MPU6050IRQHandler:
     #                         a_y_accel_offset, a_z_accel_offset,
     #                         a_x_gyro_offset, a_y_gyro_offset, a_z_gyro_offset,
     #                         a_enable_debug_output)
-    def __init__(self, a_mpu, a_logging=False, a_log_file='log.csv'):
+    def __init__(self, a_mpu, a_logging=False, a_log_file='log.csv',
+                 a_debug=False):
         self.__mpu = a_mpu
         self.__FIFO_buffer = [0]*64
         self.__mpu.dmp_initialize()
@@ -871,12 +874,13 @@ class MPU6050IRQHandler:
         self.__packet_size = self.__mpu.DMP_get_FIFO_packet_size()
         mpu_int_status = self.__mpu.get_int_status()
         if a_logging:
-            self.__start_time = clock()
+            self.__start_time = time.clock()
             self.__logging = True
             self.__log_file = open(a_log_file, 'ab')
             self.__csv_writer = csv.writer(self.__log_file, delimiter=',',
                                            quotechar='|',
                                            quoting=csv.QUOTE_MINIMAL)
+        self.__debug = a_debug
 
     def action(self, channel):
         if self.__detected_IO_error:
@@ -922,7 +926,7 @@ class MPU6050IRQHandler:
                 roll_pitch_yaw = self.__mpu.DMP_get_euler_roll_pitch_yaw(quat,
                                                                          grav)
                 if self.__logging:
-                    delta_time = clock() - self.__start_time
+                    delta_time = time.clock() - self.__start_time
                     data_concat = ['%.4f' % delta_time] + \
                         [accel.x, accel.y, accel.z] + \
                         ['%.3f' % roll_pitch_yaw.x,
@@ -930,7 +934,7 @@ class MPU6050IRQHandler:
                          '%.3f' % roll_pitch_yaw.z]
                     self.__csv_writer.writerow(data_concat)
 
-                if self.__count % 100 == 0:
+                if (self.__debug) and (self.__count % 100 == 0):
                     print('roll: ' + str(roll_pitch_yaw.x))
                     print('pitch: ' + str(roll_pitch_yaw.y))
                     print('yaw: ' + str(roll_pitch_yaw.z))

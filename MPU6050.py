@@ -851,7 +851,7 @@ class MPU6050IRQHandler:
     __FIFO_buffer = list()
     __count = 0
     __packet_size = None
-    __detected_IO_error = False
+    __detected_error = False
     __logging = False
     __log_file = None
     __csv_writer = None
@@ -883,26 +883,26 @@ class MPU6050IRQHandler:
         self.__debug = a_debug
 
     def action(self, channel):
-        if self.__detected_IO_error:
+        if self.__detected_error:
             # Clear FIFO and reset MPU
             mpu_int_status = self.__mpu.get_int_status()
             self.__mpu.reset_FIFO()
-            self.__detected_IO_error = False
+            self.__detected_error = False
             return
 
         try:
             FIFO_count = self.__mpu.get_FIFO_count()
             mpu_int_status = self.__mpu.get_int_status()
-        except IOError:
-            self.__detected_IO_error = True
+        except:
+            self.__detected_error = True
             return
 
         # If overflow is detected by status or fifo count we want to reset
         if (FIFO_count == 1024) or (mpu_int_status & 0x10):
             try:
                 self.__mpu.reset_FIFO()
-            except IOError:
-                self.__detected_IO_error = True
+            except:
+                self.__detected_error = True
                 return
 
         elif (mpu_int_status & 0x02):
@@ -911,8 +911,8 @@ class MPU6050IRQHandler:
             while FIFO_count < self.__packet_size:
                 try:
                     FIFO_count = self.__mpu.get_FIFO_count()
-                except IOError:
-                    self.__detected_IO_error = True
+                except:
+                    self.__detected_error = True
                     return
 
             while FIFO_count > self.__packet_size:
@@ -920,8 +920,8 @@ class MPU6050IRQHandler:
                 try:
                     self.__FIFO_buffer = \
                         self.__mpu.get_FIFO_bytes(self.__packet_size)
-                except IOError:
-                    self.__detected_IO_error = True
+                except:
+                    self.__detected_error = True
                     return
                 accel = \
                     self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)

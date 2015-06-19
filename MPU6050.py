@@ -895,6 +895,7 @@ class MPU6050IRQHandler:
             mpu_int_status = self.__mpu.get_int_status()
         except IOError:
             self.__detected_IO_error = True
+            return
 
         # If overflow is detected by status or fifo count we want to reset
         if (FIFO_count == 1024) or (mpu_int_status & 0x10):
@@ -902,6 +903,7 @@ class MPU6050IRQHandler:
                 self.__mpu.reset_FIFO()
             except IOError:
                 self.__detected_IO_error = True
+                return
 
         elif (mpu_int_status & 0x02):
             # Wait until packet_size number of bytes are ready for reading,
@@ -911,6 +913,7 @@ class MPU6050IRQHandler:
                     FIFO_count = self.__mpu.get_FIFO_count()
                 except IOError:
                     self.__detected_IO_error = True
+                    return
 
             while FIFO_count > self.__packet_size:
 
@@ -919,6 +922,7 @@ class MPU6050IRQHandler:
                         self.__mpu.get_FIFO_bytes(self.__packet_size)
                 except IOError:
                     self.__detected_IO_error = True
+                    return
                 accel = \
                     self.__mpu.DMP_get_acceleration_int16(self.__FIFO_buffer)
                 quat = self.__mpu.DMP_get_quaternion_int16(self.__FIFO_buffer)
